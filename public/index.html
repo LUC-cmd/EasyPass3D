@@ -3,1004 +3,796 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EasyPass 3D — Simulation Interactive de Trafic</title>
+  <title>EasyPass — Simulation Feux Intelligents</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#0a0f1e; --panel:#111827; --card:#1f2937; --border:#374151;
+      --cyan:#06b6d4; --purple:#8b5cf6; --green:#22c55e; --red:#ef4444;
+      --yellow:#eab308; --orange:#f97316; --text:#f1f5f9; --muted:#94a3b8;
+    }
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column}
 
-    :root {
-      --bg-deep:    #0a0f1e;
-      --bg-panel:   #111827;
-      --bg-card:    #1f2937;
-      --border:     #374151;
-      --accent:     #06b6d4;
-      --accent2:    #8b5cf6;
-      --green:      #22c55e;
-      --red:        #ef4444;
-      --yellow:     #eab308;
-      --text:       #f1f5f9;
-      --text-muted: #94a3b8;
-    }
+    /* HEADER */
+    header{background:linear-gradient(135deg,#1e3a5f,#0f172a);border-bottom:1px solid #1e40af44;padding:0 20px;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand-icon{width:34px;height:34px;background:linear-gradient(135deg,#3b82f6,#06b6d4);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff}
+    .brand-name{font-size:18px;font-weight:700}
+    .brand-sub{font-size:10px;color:var(--muted)}
+    .hcontrols{display:flex;gap:8px;align-items:center}
+    .btn{display:flex;align-items:center;gap:5px;padding:6px 14px;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
+    .btn-go{background:var(--green);color:#fff} .btn-go:hover{background:#16a34a}
+    .btn-stop{background:var(--red);color:#fff}
+    .badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--card)}
+    .badge.on{color:var(--green);border-color:var(--green)}
+    .badge.off{color:var(--muted)}
 
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg-deep);
-      color: var(--text);
-      height: 100vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
+    /* MAIN */
+    main{flex:1;display:flex;gap:10px;padding:10px;overflow:hidden}
 
-    /* ── HEADER ── */
-    header {
-      background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
-      border-bottom: 1px solid #1e40af44;
-      padding: 0 20px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-    }
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .brand-icon {
-      width: 36px; height: 36px; background: linear-gradient(135deg, #3b82f6, #06b6d4);
-      border-radius: 8px; display: flex; align-items: center; justify-content: center;
-      font-size: 18px; font-weight: bold; color: white;
-    }
-    .brand-name { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
-    .brand-sub  { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    /* CANVAS ZONE */
+    .sim-zone{flex:1;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+    .canvas-wrap{flex:1;background:#050a14;border-radius:12px;border:1px solid var(--border);position:relative;overflow:hidden}
+    canvas#sim{display:block;width:100%;height:100%}
 
-    .header-controls { display: flex; align-items: center; gap: 10px; }
+    /* INFO BAR */
+    .infobar{display:flex;gap:8px;flex-shrink:0}
+    .info-card{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:10px}
+    .info-icon{font-size:20px}
+    .info-val{font-size:18px;font-weight:700}
+    .info-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+    .bar{height:3px;background:var(--border);border-radius:2px;margin-top:4px}
+    .bar-fill{height:100%;border-radius:2px;transition:width .5s ease}
 
-    .btn {
-      display: flex; align-items: center; gap: 6px;
-      padding: 7px 16px; border: none; border-radius: 6px;
-      font-size: 13px; font-weight: 600; cursor: pointer;
-      transition: all .2s;
-    }
-    .btn-start { background: var(--green); color: white; }
-    .btn-start:hover { background: #16a34a; transform: translateY(-1px); }
-    .btn-stop  { background: var(--red); color: white; }
-    .btn-stop:hover { background: #dc2626; }
+    /* SIDEBAR */
+    .sidebar{width:340px;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+    .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;flex-shrink:0}
+    .ph{padding:9px 14px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;gap:7px}
+    .ph.purple{background:linear-gradient(90deg,#6d28d9,#8b5cf6)}
+    .ph.blue{background:linear-gradient(90deg,#1e40af,#3b82f6)}
+    .ph.teal{background:linear-gradient(90deg,#0f766e,#14b8a6)}
+    .ph.red{background:linear-gradient(90deg,#991b1b,#ef4444)}
 
-    .status-badge {
-      padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
-      background: var(--bg-card); border: 1px solid var(--border);
-    }
-    .status-badge.running { color: var(--green); border-color: var(--green); }
-    .status-badge.stopped { color: var(--text-muted); }
+    /* ALGO PANEL */
+    .algo-panel{padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .algo-row{background:var(--card);border-radius:8px;padding:8px;border:1px solid var(--border)}
+    .algo-dir{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:3px}
+    .algo-phase{font-size:14px;font-weight:700}
+    .algo-phase.green{color:var(--green)}
+    .algo-phase.red{color:var(--red)}
+    .algo-phase.yellow{color:var(--yellow)}
+    .algo-timer{font-size:11px;color:var(--muted);margin-top:2px}
+    .algo-density{font-size:10px;margin-top:4px}
+    .density-bar{height:4px;background:var(--border);border-radius:2px;margin-top:3px}
+    .density-fill{height:100%;border-radius:2px;background:var(--cyan);transition:width .3s}
 
-    /* ── MAIN LAYOUT ── */
-    main {
-      flex: 1; display: flex; gap: 12px;
-      padding: 12px; overflow: hidden;
-    }
+    /* COMPARE */
+    .compare{padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .cmp-box{background:var(--card);border-radius:8px;padding:10px;border:2px solid transparent;text-align:center}
+    .cmp-box.classic{border-color:#374151}
+    .cmp-box.smart{border-color:var(--cyan)}
+    .cmp-title{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
+    .cmp-val{font-size:22px;font-weight:800}
+    .cmp-box.classic .cmp-val{color:#f87171}
+    .cmp-box.smart .cmp-val{color:var(--green)}
+    .cmp-lbl{font-size:9px;color:var(--muted);margin-top:2px}
+    .gain-badge{text-align:center;padding:6px;background:#064e3b33;border-radius:6px;margin:0 10px 8px;font-size:12px;font-weight:700;color:var(--green)}
 
-    /* ── CANVAS 3D ── */
-    .canvas-wrap {
-      flex: 1; background: #050a16; border-radius: 12px;
-      border: 1px solid var(--border); overflow: hidden; position: relative;
-    }
-    canvas { display: block; width: 100%; height: 100%; }
+    /* CHAT */
+    .chat-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+    .msgs{flex:1;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth}
+    .msg{max-width:90%;padding:8px 11px;border-radius:10px;font-size:12px;line-height:1.5;animation:fadeUp .2s ease}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+    .msg.user{align-self:flex-end;background:#2563eb;border-bottom-right-radius:3px}
+    .msg.bot{align-self:flex-start;background:var(--card);border:1px solid var(--border);border-bottom-left-radius:3px}
+    .msg.thinking{color:#475569;font-style:italic}
+    .qcmds{padding:5px 8px;display:flex;flex-wrap:wrap;gap:4px;border-top:1px solid var(--border)}
+    .qcmd{background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:2px 8px;font-size:10px;cursor:pointer;transition:all .15s}
+    .qcmd:hover{background:var(--purple);border-color:var(--purple);color:#fff}
+    .chat-in{border-top:1px solid var(--border);padding:7px;display:flex;gap:5px;background:var(--bg)}
+    .chat-in textarea{flex:1;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px 9px;font-size:12px;resize:none;font-family:inherit}
+    .chat-in textarea:focus{outline:none;border-color:var(--purple)}
+    .chat-in button{background:var(--purple);color:#fff;border:none;border-radius:6px;width:36px;cursor:pointer;font-size:15px}
 
-    .canvas-overlay {
-      position: absolute; inset: 0; pointer-events: none;
-    }
-    .scenario-label {
-      position: absolute; top: 14px; left: 14px;
-      background: rgba(0,0,0,.6); border: 1px solid rgba(255,255,255,.1);
-      backdrop-filter: blur(8px);
-      padding: 6px 14px; border-radius: 20px;
-      font-size: 12px; font-weight: 600; color: var(--accent);
-      text-transform: uppercase; letter-spacing: 1px;
-    }
-    .fps-label {
-      position: absolute; bottom: 14px; left: 14px;
-      background: rgba(0,0,0,.5); border-radius: 6px;
-      padding: 4px 10px; font-size: 11px; color: #64748b; font-family: monospace;
-    }
-    .emergency-overlay {
-      position: absolute; inset: 0; border-radius: 12px;
-      border: 3px solid var(--red); animation: emergency-pulse 0.8s ease infinite;
-      display: none;
-    }
-    @keyframes emergency-pulse {
-      0%,100% { opacity: 1; } 50% { opacity: 0.3; }
-    }
+    /* SCENARIO BTNS */
+    .scen-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:8px}
+    .scen-btn{display:flex;align-items:center;gap:6px;padding:7px 9px;background:var(--card);border:1px solid var(--border);border-radius:7px;cursor:pointer;font-size:11px;transition:all .15s}
+    .scen-btn:hover{border-color:var(--cyan);background:#0c4a6e33}
+    .scen-btn.active{border-color:var(--cyan);background:#0c4a6e55;color:var(--cyan)}
 
-    /* ── SIDEBAR ── */
-    .sidebar {
-      width: 360px; display: flex; flex-direction: column; gap: 10px;
-    }
-
-    .panel {
-      background: var(--bg-panel); border: 1px solid var(--border);
-      border-radius: 12px; overflow: hidden;
-    }
-    .panel-head {
-      padding: 10px 14px; font-size: 12px; font-weight: 700;
-      letter-spacing: .5px; text-transform: uppercase;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .panel-head.purple { background: linear-gradient(90deg,#6d28d9,#8b5cf6); }
-    .panel-head.teal   { background: linear-gradient(90deg,#0f766e,#14b8a6); }
-    .panel-head.blue   { background: linear-gradient(90deg,#1e40af,#3b82f6); }
-    .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-
-    /* ── CHAT ── */
-    .chat-panel { flex: 0 0 auto; display: flex; flex-direction: column; height: 220px; }
-    .chat-panel .panel-head { flex-shrink: 0; }
-
-    .messages {
-      flex: 1; overflow-y: auto; padding: 10px 12px;
-      display: flex; flex-direction: column; gap: 8px;
-      scroll-behavior: smooth;
-    }
-    .msg {
-      max-width: 88%; padding: 9px 13px; border-radius: 10px;
-      font-size: 12.5px; line-height: 1.5; animation: fadeUp .25s ease;
-    }
-    @keyframes fadeUp {
-      from { opacity:0; transform: translateY(6px); }
-      to   { opacity:1; transform: none; }
-    }
-    .msg.user {
-      align-self: flex-end; background: #2563eb;
-      border-bottom-right-radius: 3px;
-    }
-    .msg.bot {
-      align-self: flex-start; background: var(--bg-card);
-      border-bottom-left-radius: 3px; border: 1px solid var(--border);
-    }
-    .msg.thinking { color: #64748b; font-style: italic; }
-
-    .chat-input-row {
-      border-top: 1px solid var(--border); padding: 8px;
-      display: flex; gap: 6px; background: var(--bg-deep);
-    }
-    .chat-input-row textarea {
-      flex: 1; background: var(--bg-card); color: var(--text);
-      border: 1px solid var(--border); border-radius: 6px;
-      padding: 8px 10px; font-family: inherit; font-size: 12.5px;
-      resize: none; max-height: 72px;
-      transition: border-color .2s;
-    }
-    .chat-input-row textarea:focus {
-      outline: none; border-color: var(--accent2);
-    }
-    .chat-input-row button {
-      background: var(--accent2); color: white; border: none;
-      border-radius: 6px; width: 38px; cursor: pointer;
-      font-size: 16px; transition: background .2s;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .chat-input-row button:hover { background: #7c3aed; }
-    .chat-input-row button:disabled { opacity: .4; cursor: default; }
-
-    /* Quick commands */
-    .quick-cmds {
-      padding: 6px 10px; display: flex; flex-wrap: wrap; gap: 5px;
-      border-top: 1px solid var(--border);
-    }
-    .qcmd {
-      background: var(--bg-card); border: 1px solid var(--border);
-      color: var(--text-muted); border-radius: 14px;
-      padding: 3px 10px; font-size: 11px; cursor: pointer;
-      transition: all .15s;
-    }
-    .qcmd:hover { background: var(--accent2); border-color: var(--accent2); color: white; }
-
-    /* ── SCENARIOS ── */
-    .scenarios-panel { flex-shrink: 0; }
-    .scenario-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 10px;
-    }
-    .scen-btn {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 10px; background: var(--bg-card);
-      border: 1px solid var(--border); border-radius: 8px;
-      cursor: pointer; transition: all .15s; font-size: 12px;
-    }
-    .scen-btn:hover  { border-color: var(--accent); background: #0c4a6e33; }
-    .scen-btn.active { border-color: var(--accent); background: #0c4a6e55; color: var(--accent); }
-    .scen-icon { font-size: 18px; }
-
-    /* ── METRICS ── */
-    .metrics-panel { flex: 1; overflow-y: auto; }
-    .metrics-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 10px; }
-    .metric {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 8px; padding: 10px; position: relative; overflow: hidden;
-    }
-    .metric::before {
-      content: ''; position: absolute; inset: 0;
-      background: currentColor; opacity: .04;
-    }
-    .metric-icon { font-size: 18px; margin-bottom: 4px; }
-    .metric-val  { font-size: 20px; font-weight: 700; }
-    .metric-lbl  { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
-    .metric-bar  {
-      height: 3px; background: var(--border); border-radius: 2px;
-      margin-top: 6px; overflow: hidden;
-    }
-    .metric-bar-fill { height: 100%; border-radius: 2px; transition: width .6s ease; }
-
-    .m-cyan   { color: var(--accent); }
-    .m-red    { color: #f87171; }
-    .m-yellow { color: var(--yellow); }
-    .m-blue   { color: #60a5fa; }
-    .m-green  { color: var(--green); }
-    .m-orange { color: #fb923c; }
-
-    /* ── SCROLLBAR ── */
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-thumb{background:#334155;border-radius:2px}
+    ::-webkit-scrollbar-track{background:transparent}
   </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header>
   <div class="brand">
     <div class="brand-icon">EP</div>
     <div>
-      <div class="brand-name">EasyPass <span style="color:var(--accent)">3D</span></div>
-      <div class="brand-sub">Simulation de trafic urbain intelligent · Groupe SuitFlow</div>
+      <div class="brand-name">EasyPass <span style="color:var(--cyan)">3D</span></div>
+      <div class="brand-sub">Feux intelligents adaptatifs — Groupe SuitFlow · Université de Lomé</div>
     </div>
   </div>
-  <div class="header-controls">
-    <div class="status-badge stopped" id="statusBadge">● Arrêtée</div>
-    <button class="btn btn-start" id="btnStart" onclick="toggleSim()">▶ Démarrer</button>
+  <div class="hcontrols">
+    <div class="badge off" id="badge">● Arrêtée</div>
+    <button class="btn btn-go" id="btnMain" onclick="toggleSim()">▶ Démarrer</button>
   </div>
 </header>
 
-<!-- MAIN -->
 <main>
+  <!-- SIMULATION CANVAS -->
+  <div class="sim-zone">
+    <div class="canvas-wrap">
+      <canvas id="sim"></canvas>
+    </div>
 
-  <!-- 3D CANVAS -->
-  <div class="canvas-wrap">
-    <canvas id="canvas"></canvas>
-    <div class="canvas-overlay">
-      <div class="scenario-label" id="scenLabel">⚙ Normal</div>
-      <div class="fps-label" id="fpsLabel">0 fps</div>
-      <div class="emergency-overlay" id="emergencyOverlay"></div>
+    <!-- MÉTRIQUES -->
+    <div class="infobar">
+      <div class="info-card">
+        <div class="info-icon">⏱</div>
+        <div>
+          <div class="info-val" id="m-wait" style="color:var(--cyan)">87s</div>
+          <div class="info-lbl">Attente moy.</div>
+          <div class="bar"><div class="bar-fill" id="b-wait" style="width:40%;background:var(--cyan)"></div></div>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-icon">🚗</div>
+        <div>
+          <div class="info-val" id="m-veh" style="color:var(--yellow)">0</div>
+          <div class="info-lbl">Véhicules actifs</div>
+          <div class="bar"><div class="bar-fill" id="b-veh" style="width:0%;background:var(--yellow)"></div></div>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-icon">🌍</div>
+        <div>
+          <div class="info-val" id="m-co2" style="color:var(--red)">100%</div>
+          <div class="info-lbl">Émissions CO₂</div>
+          <div class="bar"><div class="bar-fill" id="b-co2" style="width:100%;background:var(--red)"></div></div>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-icon">⚡</div>
+        <div>
+          <div class="info-val" id="m-eff" style="color:var(--green)">+0%</div>
+          <div class="info-lbl">Gain EasyPass</div>
+          <div class="bar"><div class="bar-fill" id="b-eff" style="width:0%;background:var(--green)"></div></div>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-icon">🚦</div>
+        <div>
+          <div class="info-val" id="m-cycles" style="color:var(--purple)">0</div>
+          <div class="info-lbl">Cycles adaptés</div>
+          <div class="bar"><div class="bar-fill" id="b-cycles" style="width:0%;background:var(--purple)"></div></div>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- SIDEBAR -->
   <aside class="sidebar">
 
-    <!-- Chat -->
+    <!-- ALGO FEUX -->
+    <div class="panel">
+      <div class="ph red">🚦 <span>Capteurs & Feux adaptatifs</span></div>
+      <div class="algo-panel" id="algoPanel">
+        <!-- rempli par JS -->
+      </div>
+    </div>
+
+    <!-- COMPARAISON -->
+    <div class="panel">
+      <div class="ph teal">📊 <span>Feux fixes vs EasyPass</span></div>
+      <div class="compare">
+        <div class="cmp-box classic">
+          <div class="cmp-title">🔴 Feux fixes</div>
+          <div class="cmp-val" id="c-classic">87s</div>
+          <div class="cmp-lbl">attente moyenne</div>
+        </div>
+        <div class="cmp-box smart">
+          <div class="cmp-title">✅ EasyPass</div>
+          <div class="cmp-val" id="c-smart">87s</div>
+          <div class="cmp-lbl">attente moyenne</div>
+        </div>
+      </div>
+      <div class="gain-badge" id="gainBadge">🎯 Démarrez la simulation pour voir le gain</div>
+    </div>
+
+    <!-- SCÉNARIOS -->
+    <div class="panel">
+      <div class="ph blue">🗺 <span>Scénarios</span></div>
+      <div class="scen-grid">
+        <div class="scen-btn active" id="s-normal" onclick="setScen('normal')">☀️ Normal</div>
+        <div class="scen-btn" id="s-rush" onclick="setScen('rush')">🚗 Heure de pointe</div>
+        <div class="scen-btn" id="s-incident" onclick="setScen('incident')">⚠️ Incident</div>
+        <div class="scen-btn" id="s-nuit" onclick="setScen('nuit')">🌙 Nuit calme</div>
+      </div>
+    </div>
+
+    <!-- CHAT -->
     <div class="panel chat-panel">
-      <div class="panel-head purple">💬 <span>Contrôle par Chat — Claude IA</span></div>
-      <div class="messages" id="messages">
-        <div class="msg bot">Salut! Je suis ton assistant EasyPass. Dis-moi ce que tu veux faire avec la simulation ou choisis un scénario ci-dessous.</div>
+      <div class="ph purple">💬 <span>Contrôle — Claude IA</span></div>
+      <div class="msgs" id="msgs">
+        <div class="msg bot">Salut ! Je suis l'assistant EasyPass. La simulation montre comment les <strong>feux intelligents s'adaptent</strong> selon la densité des voitures détectée par les capteurs. Lance la simulation et pose-moi tes questions !</div>
       </div>
-      <div class="quick-cmds">
-        <span class="qcmd" onclick="quickCmd('Active le rush')">🚗 Rush</span>
-        <span class="qcmd" onclick="quickCmd('Pluie intense')">🌧 Pluie</span>
-        <span class="qcmd" onclick="quickCmd('Mode urgence ambulance')">🚑 Urgence</span>
-        <span class="qcmd" onclick="quickCmd('Nuit calme')">🌙 Nuit</span>
-        <span class="qcmd" onclick="quickCmd('Scénario normal')">✅ Reset</span>
+      <div class="qcmds">
+        <span class="qcmd" onclick="qc('Explique comment les capteurs fonctionnent')">🔍 Capteurs</span>
+        <span class="qcmd" onclick="qc('Active le scénario rush')">🚗 Rush</span>
+        <span class="qcmd" onclick="qc('Mode urgence ambulance')">🚑 Urgence</span>
+        <span class="qcmd" onclick="qc('Quel est le gain sur le CO2 ?')">🌍 CO₂</span>
       </div>
-      <div class="chat-input-row">
-        <textarea id="chatInput" placeholder="Ex: Augmente le trafic de 80%..." rows="1"></textarea>
-        <button id="sendBtn" onclick="sendMsg()" title="Envoyer">↑</button>
-      </div>
-    </div>
-
-    <!-- Scenarios -->
-    <div class="panel scenarios-panel">
-      <div class="panel-head blue">🗺 <span>Scénarios</span></div>
-      <div class="scenario-grid">
-        <div class="scen-btn active" id="scen-normal"  onclick="setScenario('normal','⚙ Normal')">
-          <span class="scen-icon">☀️</span><span>Normal</span></div>
-        <div class="scen-btn" id="scen-rush"    onclick="setScenario('rush','🚗 Rush')">
-          <span class="scen-icon">🚗</span><span>Heure de pointe</span></div>
-        <div class="scen-btn" id="scen-incident" onclick="setScenario('incident','⚠ Incident')">
-          <span class="scen-icon">⚠️</span><span>Incident majeur</span></div>
-        <div class="scen-btn" id="scen-pluie"   onclick="setScenario('pluie','🌧 Pluie')">
-          <span class="scen-icon">🌧️</span><span>Pluie intense</span></div>
-        <div class="scen-btn" id="scen-nuit"    onclick="setScenario('nuit','🌙 Nuit')">
-          <span class="scen-icon">🌙</span><span>Nuit calme</span></div>
-        <div class="scen-btn" id="scen-evenement" onclick="setScenario('evenement','🎉 Événement')">
-          <span class="scen-icon">🎉</span><span>Événement public</span></div>
-      </div>
-    </div>
-
-    <!-- Metrics -->
-    <div class="panel metrics-panel">
-      <div class="panel-head teal">📊 <span>Métriques temps réel</span></div>
-      <div class="metrics-grid">
-        <div class="metric m-cyan">
-          <div class="metric-icon">⏱</div>
-          <div class="metric-val" id="m-wait">87s</div>
-          <div class="metric-lbl">Temps d'attente</div>
-          <div class="metric-bar"><div class="metric-bar-fill" id="b-wait" style="width:40%;background:#06b6d4"></div></div>
-        </div>
-        <div class="metric m-red">
-          <div class="metric-icon">🌍</div>
-          <div class="metric-val" id="m-co2">100%</div>
-          <div class="metric-lbl">Émissions CO₂</div>
-          <div class="metric-bar"><div class="metric-bar-fill" id="b-co2" style="width:100%;background:#ef4444"></div></div>
-        </div>
-        <div class="metric m-yellow">
-          <div class="metric-icon">🚗</div>
-          <div class="metric-val" id="m-cap">1200</div>
-          <div class="metric-lbl">Capacité véh/h</div>
-          <div class="metric-bar"><div class="metric-bar-fill" id="b-cap" style="width:60%;background:#eab308"></div></div>
-        </div>
-        <div class="metric m-blue">
-          <div class="metric-icon">🚕</div>
-          <div class="metric-val" id="m-veh">108</div>
-          <div class="metric-lbl">Véhicules actifs</div>
-          <div class="metric-bar"><div class="metric-bar-fill" id="b-veh" style="width:54%;background:#60a5fa"></div></div>
-        </div>
-        <div class="metric m-orange">
-          <div class="metric-icon">🚨</div>
-          <div class="metric-val" id="m-cong">65%</div>
-          <div class="metric-lbl">Congestion</div>
-          <div class="metric-bar"><div class="metric-bar-fill" id="b-cong" style="width:65%;background:#fb923c"></div></div>
-        </div>
-        <div class="metric m-green">
-          <div class="metric-icon">🔋</div>
-          <div class="metric-val" id="m-energy">100%</div>
-          <div class="metric-lbl">Énergie feux</div>
-          <div class="metric-bar"><div class="metric-bar-fill" id="b-energy" style="width:100%;background:#22c55e"></div></div>
-        </div>
+      <div class="chat-in">
+        <textarea id="cin" placeholder="Pose une question ou donne une commande..." rows="2"></textarea>
+        <button onclick="sendMsg()">↑</button>
       </div>
     </div>
 
   </aside>
 </main>
 
-<!-- Three.js + Socket.io via CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-
 <script>
-// ─── STATE ──────────────────────────────────────────
-let simRunning = false;
-let currentScenario = 'normal';
-let emergencyMode = false;
-let weatherMode = 'clear';
+// ═══════════════════════════════════════════════════════
+//  ÉTAT GLOBAL
+// ═══════════════════════════════════════════════════════
+const BACKEND_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? 'http://localhost:5000' : location.origin;
 
-// ─── CONFIG BACKEND (auto local/prod) ───────────────
-// En local → backend séparé sur :5000
-// En prod sur Render → même domaine (backend sert aussi le frontend)
-const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? 'http://localhost:5000'
-  : window.location.origin;
+let running = false;
+let scenario = 'normal';
+let emergency = false;
+let tick = 0;
+let cyclesAdapted = 0;
+let totalWaitFixed = 0;   // attente cumulée mode fixe (simulation)
+let totalWaitSmart = 0;   // attente cumulée mode EasyPass
 
-// ─── SOCKET ─────────────────────────────────────────
-const socket = io(BACKEND_URL, {
-  transports: ['polling', 'websocket'],
-  reconnectionAttempts: 5,
-  reconnectionDelay: 2000,
-  timeout: 5000
-});
+// ═══════════════════════════════════════════════════════
+//  SYSTÈME DE FEUX ADAPTATIFS
+// ═══════════════════════════════════════════════════════
+const DIRS = ['Nord', 'Sud', 'Est', 'Ouest'];
+const DIR_COLORS = { Nord:'#3b82f6', Sud:'#f97316', Est:'#a855f7', Ouest:'#22c55e' };
 
-socket.on('connect',           () => console.log('✅ Socket connecté'));
-socket.on('metrics:update',    updateMetrics);
-socket.on('simulation:started',() => setRunState(true));
-socket.on('simulation:stopped',() => setRunState(false));
+// Config feux fixes classiques
+const FIXED_GREEN = 20;   // secondes
+const FIXED_RED   = 20;
 
-// ─── SIMULATION CONTROL ─────────────────────────────
-function toggleSim() {
-  if (simRunning) { socket.emit('stop'); }
-  else            { socket.emit('start'); }
-}
-
-function setRunState(running) {
-  simRunning = running;
-  const btn = document.getElementById('btnStart');
-  const badge = document.getElementById('statusBadge');
-  if (running) {
-    btn.textContent = '⏹ Arrêter';
-    btn.className = 'btn btn-stop';
-    badge.className = 'status-badge running';
-    badge.textContent = '▌▌ En cours';
-  } else {
-    btn.textContent = '▶ Démarrer';
-    btn.className = 'btn btn-start';
-    badge.className = 'status-badge stopped';
-    badge.textContent = '● Arrêtée';
-  }
-}
-
-function setScenario(value, label) {
-  currentScenario = value;
-  socket.emit('command', { type: 'scenario', value });
-
-  // Météo auto selon scénario
-  if (value === 'pluie') { weatherMode = 'rain';  socket.emit('command', { type: 'weather', value: 'rain' }); updateWeatherFX('rain'); }
-  else if (value === 'nuit') { weatherMode = 'night'; socket.emit('command', { type: 'weather', value: 'night' }); updateWeatherFX('night'); }
-  else { weatherMode = 'clear'; updateWeatherFX('clear'); }
-
-  // Emergency auto
-  const isEmerg = false;
-  updateEmergency(isEmerg);
-
-  // Update UI
-  document.getElementById('scenLabel').textContent = label;
-  document.querySelectorAll('.scen-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('scen-' + value)?.classList.add('active');
-}
-
-// ─── METRICS ────────────────────────────────────────
-function updateMetrics(d) {
-  const set = (id, val, barId, pct) => {
-    document.getElementById(id).textContent = val;
-    if (barId) document.getElementById(barId).style.width = Math.min(100, pct) + '%';
-  };
-
-  set('m-wait',   d.avgWaitTime + 's',   'b-wait',   (d.avgWaitTime / 200) * 100);
-  set('m-co2',    d.co2Emissions + '%',   'b-co2',    d.co2Emissions);
-  set('m-cap',    d.throughput,           'b-cap',    (d.throughput / 2000) * 100);
-  set('m-veh',    d.vehicleCount,         'b-veh',    (d.vehicleCount / 200) * 100);
-  set('m-cong',   d.congestionLevel + '%','b-cong',   d.congestionLevel);
-  set('m-energy', d.energyConsumption + '%','b-energy', d.energyConsumption);
-}
-
-// ─── CHAT ───────────────────────────────────────────
-function quickCmd(cmd) {
-  document.getElementById('chatInput').value = cmd;
-  sendMsg();
-}
-
-async function sendMsg() {
-  const input = document.getElementById('chatInput');
-  const msg = input.value.trim();
-  if (!msg) return;
-  input.value = '';
-
-  addMsg('user', msg);
-  const thinking = addMsg('bot', '...', true);
-  document.getElementById('sendBtn').disabled = true;
-
-  try {
-    const res = await fetch(`${BACKEND_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: msg, sessionId: 'sim-session' })
-    });
-    const data = await res.json();
-    thinking.remove();
-    addMsg('bot', data.response || 'Commande exécutée!');
-
-    // Apply commands
-    if (data.commands && data.commands.length) {
-      data.commands.forEach(cmd => {
-        socket.emit('command', cmd);
-        if (cmd.type === 'weather') updateWeatherFX(cmd.value);
-        if (cmd.type === 'emergency') updateEmergency(cmd.value);
-        if (cmd.type === 'scenario') {
-          document.querySelectorAll('.scen-btn').forEach(b => b.classList.remove('active'));
-          document.getElementById('scen-' + cmd.value)?.classList.add('active');
-        }
-      });
-    }
-  } catch(e) {
-    thinking.remove();
-    addMsg('bot', '⚠ Backend non connecté. Commandes locales actives.');
-    handleLocalCommand(msg);
-  }
-  document.getElementById('sendBtn').disabled = false;
-}
-
-function addMsg(role, text, isThinking = false) {
-  const el = document.createElement('div');
-  el.className = 'msg ' + (role === 'user' ? 'user' : 'bot') + (isThinking ? ' thinking' : '');
-  el.textContent = text;
-  const container = document.getElementById('messages');
-  container.appendChild(el);
-  container.scrollTop = container.scrollHeight;
-  return el;
-}
-
-function handleLocalCommand(msg) {
-  const m = msg.toLowerCase();
-  if      (m.includes('rush') || m.includes('pointe'))  setScenario('rush', '🚗 Rush');
-  else if (m.includes('pluie') || m.includes('rain'))   setScenario('pluie', '🌧 Pluie');
-  else if (m.includes('nuit') || m.includes('night'))   setScenario('nuit', '🌙 Nuit');
-  else if (m.includes('incident') || m.includes('accident')) setScenario('incident', '⚠ Incident');
-  else if (m.includes('normal') || m.includes('reset')) setScenario('normal', '⚙ Normal');
-  else if (m.includes('urgence') || m.includes('ambulance')) updateEmergency(true);
-}
-
-document.getElementById('chatInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
-});
-
-// ─── WEATHER & EMERGENCY FX ─────────────────────────
-let rainParticles = null, rainGeom = null, rainMat = null;
-let ambientLight, dirLight, fogColor;
-
-function updateWeatherFX(mode) {
-  weatherMode = mode;
-  if (!scene) return;
-
-  if (mode === 'rain') {
-    scene.background = new THREE.Color(0x0a1020);
-    scene.fog = new THREE.Fog(0x0a1020, 250, 500);
-    if (ambientLight) ambientLight.intensity = 0.3;
-    if (dirLight)     dirLight.intensity = 0.4;
-    createRain();
-  } else if (mode === 'night') {
-    scene.background = new THREE.Color(0x030608);
-    scene.fog = new THREE.Fog(0x030608, 200, 450);
-    if (ambientLight) ambientLight.intensity = 0.15;
-    if (dirLight)     dirLight.intensity = 0.1;
-    removeRain();
-  } else {
-    scene.background = new THREE.Color(0x1a1a2e);
-    scene.fog = new THREE.Fog(0x1a1a2e, 450, 700);
-    if (ambientLight) ambientLight.intensity = 0.7;
-    if (dirLight)     dirLight.intensity = 0.9;
-    removeRain();
-  }
-}
-
-function createRain() {
-  if (rainParticles) return;
-  const count = 2000;
-  rainGeom = new THREE.BufferGeometry();
-  const pos = new Float32Array(count * 3);
-  for (let i = 0; i < count; i++) {
-    pos[i*3]   = (Math.random() - 0.5) * 400;
-    pos[i*3+1] = Math.random() * 200;
-    pos[i*3+2] = (Math.random() - 0.5) * 400;
-  }
-  rainGeom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  rainMat = new THREE.PointsMaterial({ color: 0x99bbdd, size: 0.8, transparent: true, opacity: 0.6 });
-  rainParticles = new THREE.Points(rainGeom, rainMat);
-  scene.add(rainParticles);
-}
-
-function removeRain() {
-  if (rainParticles) { scene.remove(rainParticles); rainParticles = null; }
-}
-
-function updateEmergency(active) {
-  emergencyMode = active;
-  document.getElementById('emergencyOverlay').style.display = active ? 'block' : 'none';
-  socket.emit('command', { type: 'emergency', value: active });
-}
-
-// ─── THREE.JS SCENE ─────────────────────────────────
-let scene, camera, renderer;
-const vehicleMeshes = [];
-let frameCount = 0, lastFpsTime = performance.now();
-const lightCycles = []; // { group, phase, offset }
-
-function initScene() {
-  const canvas = document.getElementById('canvas');
-
-  // Scene
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x1a1a2e);
-  scene.fog = new THREE.Fog(0x1a1a2e, 450, 700);
-
-  // Camera — vue isométrique légèrement inclinée
-  camera = new THREE.PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.5, 1000);
-  camera.position.set(0, 170, 200);
-  camera.lookAt(0, 0, 0);
-
-  // Renderer
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-  // Lighting
-  ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-  scene.add(ambientLight);
-
-  dirLight = new THREE.DirectionalLight(0xfff5e0, 0.9);
-  dirLight.position.set(120, 200, 80);
-  dirLight.castShadow = true;
-  dirLight.shadow.mapSize.set(2048, 2048);
-  dirLight.shadow.camera.near = 0.5;
-  dirLight.shadow.camera.far = 600;
-  dirLight.shadow.camera.left = -200;
-  dirLight.shadow.camera.right = 200;
-  dirLight.shadow.camera.top = 200;
-  dirLight.shadow.camera.bottom = -200;
-  scene.add(dirLight);
-
-  buildCity();
-  animate();
-
-  window.addEventListener('resize', () => {
-    const w = canvas.clientWidth, h = canvas.clientHeight;
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    renderer.setSize(w, h);
-  });
-}
-
-function buildCity() {
-  // ── SOL ──
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(500, 500),
-    new THREE.MeshLambertMaterial({ color: 0x1c2333 })
-  );
-  ground.rotation.x = -Math.PI / 2;
-  ground.receiveShadow = true;
-  scene.add(ground);
-
-  // ── HERBE / ZONES VERTES ──
-  const grass = mat => new THREE.MeshLambertMaterial({ color: mat });
-  const addGrass = (x, z, w, d) => {
-    const g = new THREE.Mesh(new THREE.PlaneGeometry(w, d), grass(0x1a3a1a));
-    g.rotation.x = -Math.PI / 2; g.position.set(x, 0.02, z);
-    scene.add(g);
-  };
-  addGrass( 90,  90, 70, 70);
-  addGrass(-90,  90, 70, 70);
-  addGrass( 90, -90, 70, 70);
-  addGrass(-90, -90, 70, 70);
-
-  // ── ROUTES ──
-  const roadMat = new THREE.MeshLambertMaterial({ color: 0x252932 });
-  const mkRoad = (x, z, w, d) => {
-    const r = new THREE.Mesh(new THREE.PlaneGeometry(w, d), roadMat);
-    r.rotation.x = -Math.PI / 2; r.position.set(x, 0.03, z);
-    r.receiveShadow = true; scene.add(r);
-  };
-  mkRoad(0, 0, 500, 60);  // horizontal
-  mkRoad(0, 0, 60, 500);  // vertical
-
-  // Marquages au sol (lignes jaunes)
-  const lineMat = new THREE.MeshLambertMaterial({ color: 0xffee44 });
-  for (let i = -200; i <= 200; i += 20) {
-    if (Math.abs(i) < 32) continue;
-    const line = new THREE.Mesh(new THREE.PlaneGeometry(12, 2), lineMat);
-    line.rotation.x = -Math.PI / 2; line.position.set(i, 0.04, 0);
-    scene.add(line);
-    const line2 = new THREE.Mesh(new THREE.PlaneGeometry(2, 12), lineMat);
-    line2.rotation.x = -Math.PI / 2; line2.position.set(0, 0.04, i);
-    scene.add(line2);
+class AdaptiveLight {
+  constructor(dir, pairIndex) {
+    this.dir = dir;
+    this.pairIndex = pairIndex; // 0=NS, 1=EO
+    this.phase = pairIndex === 0 ? 'green' : 'red';
+    this.timeLeft = FIXED_GREEN;
+    this.density = 0;       // nb voitures en attente (capteur)
+    this.greenDuration = FIXED_GREEN;
+    this.adaptations = 0;
   }
 
-  // ── FEUX DE SIGNALISATION ──
-  const lightPositions = [
-    [-32, -32], [32, -32], [-32, 32], [32, 32]
-  ];
-  lightPositions.forEach(([x, z], i) => {
-    const group = buildTrafficLight(x, z);
-    scene.add(group);
-    lightCycles.push({ group, phase: 'red', offset: i * 0.5, timer: 0 });
-  });
+  // Algo adaptatif : durée verte = f(densité)
+  computeGreenDuration(density) {
+    const min = 8, max = 45, base = 20;
+    if (emergency) return this.dir === 'Est' ? 60 : 5; // couloir urgence
+    return Math.min(max, Math.max(min, base + density * 2.5));
+  }
 
-  // ── BÂTIMENTS AFRICAINS ──
-  const buildings = [
-    { x: 90, z: 90, w: 25, h: 60, d: 25, color: 0x3d5a80 },
-    { x: 80, z: 105, w: 18, h: 40, d: 18, color: 0x2e4057 },
-    { x:-90, z: 90, w: 30, h: 80, d: 25, color: 0x4a5e7a },
-    { x:-80, z: 105, w: 20, h: 45, d: 20, color: 0x2d3e50 },
-    { x: 90, z:-90, w: 22, h: 55, d: 28, color: 0x3b5268 },
-    { x:-90, z:-90, w: 28, h: 70, d: 22, color: 0x3a4f65 },
-    { x: 95, z: 75, w: 15, h: 30, d: 15, color: 0x5b7a3d },
-    { x:-95, z:-75, w: 15, h: 35, d: 15, color: 0x5b7a3d },
-  ];
-
-  buildings.forEach(b => {
-    const bldg = new THREE.Mesh(
-      new THREE.BoxGeometry(b.w, b.h, b.d),
-      new THREE.MeshLambertMaterial({ color: b.color })
-    );
-    bldg.position.set(b.x, b.h / 2, b.z);
-    bldg.castShadow = true; bldg.receiveShadow = true;
-    scene.add(bldg);
-
-    // Toit
-    const roof = new THREE.Mesh(
-      new THREE.ConeGeometry(b.w * 0.72, b.h * 0.25, 4),
-      new THREE.MeshLambertMaterial({ color: 0xa0522d })
-    );
-    roof.position.set(b.x, b.h + b.h * 0.12, b.z);
-    roof.rotation.y = Math.PI / 4;
-    scene.add(roof);
-
-    // Fenêtres (placeholders lumineux)
-    const winMat = new THREE.MeshBasicMaterial({ color: 0xffee99, transparent: true, opacity: 0.8 });
-    for (let r = 0; r < 3; r++) {
-      for (let c = 0; c < 2; c++) {
-        const win = new THREE.Mesh(new THREE.PlaneGeometry(3, 3), winMat);
-        win.position.set(b.x + (c - 0.5) * 8, b.h * 0.4 + r * 10, b.z + b.d / 2 + 0.1);
-        scene.add(win);
+  nextPhase() {
+    const wasGreen = this.phase === 'green';
+    if (this.phase === 'green') {
+      this.phase = 'yellow'; this.timeLeft = 3;
+    } else if (this.phase === 'yellow') {
+      this.phase = 'red'; this.timeLeft = 0; // durée calculée par le contrôleur
+    } else {
+      this.phase = 'green';
+      const newDur = this.computeGreenDuration(this.density);
+      if (Math.abs(newDur - FIXED_GREEN) > 2) {
+        this.adaptations++;
+        cyclesAdapted++;
       }
+      this.greenDuration = newDur;
+      this.timeLeft = newDur;
     }
-  });
-
-  // ── PALMIERS / ARBRES TROPICAUX ──
-  const treePositions = [
-    [ 60, 80], [-60, 80], [ 60,-80], [-60,-80],
-    [ 80, 60], [-80, 60], [ 80,-60], [-80,-60],
-    [110, 30], [-110, 30], [110,-30], [-110,-30],
-  ];
-  treePositions.forEach(([x, z]) => addPalmTree(x, z));
-
-  // ── PIÉTONS ──
-  addPedestrians();
-}
-
-function buildTrafficLight(x, z) {
-  const group = new THREE.Group();
-
-  // Poteau
-  const pole = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.2, 1.4, 45, 8),
-    new THREE.MeshLambertMaterial({ color: 0x555555 })
-  );
-  pole.position.set(x, 22.5, z);
-  pole.castShadow = true;
-  group.add(pole);
-
-  // Boîtier
-  const box = new THREE.Mesh(
-    new THREE.BoxGeometry(8, 22, 7),
-    new THREE.MeshLambertMaterial({ color: 0x222222 })
-  );
-  box.position.set(x, 50, z);
-  group.add(box);
-
-  // Les 3 lumières
-  const colors = [0xff2200, 0xffaa00, 0x00dd44];
-  const lightNames = ['red', 'yellow', 'green'];
-  colors.forEach((col, i) => {
-    const bulb = new THREE.Mesh(
-      new THREE.CircleGeometry(2.5, 16),
-      new THREE.MeshBasicMaterial({ color: col })
-    );
-    bulb.position.set(x, 57 - i * 8, z + 3.6);
-    bulb.userData.lightType = lightNames[i];
-    bulb.userData.activeColor = col;
-    bulb.userData.dimColor = new THREE.Color(col).multiplyScalar(0.2).getHex();
-    group.add(bulb);
-  });
-
-  return group;
-}
-
-function addPalmTree(x, z) {
-  // Tronc
-  const trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.2, 2, 20 + Math.random() * 10, 6),
-    new THREE.MeshLambertMaterial({ color: 0x8b6914 })
-  );
-  trunk.position.set(x, 10, z);
-  trunk.castShadow = true;
-  scene.add(trunk);
-
-  // Feuilles (cônes)
-  for (let i = 0; i < 5; i++) {
-    const leaf = new THREE.Mesh(
-      new THREE.ConeGeometry(12, 8, 4),
-      new THREE.MeshLambertMaterial({ color: 0x2d6a4f })
-    );
-    leaf.position.set(
-      x + Math.sin(i * 1.26) * 5,
-      22 + Math.random() * 4,
-      z + Math.cos(i * 1.26) * 5
-    );
-    leaf.rotation.set(
-      -0.5 + Math.random() * 0.4,
-      i * 1.26,
-      0
-    );
-    leaf.castShadow = true;
-    scene.add(leaf);
   }
 }
 
-function addPedestrians() {
-  const pedMat = new THREE.MeshLambertMaterial({ color: 0xffcc88 });
-  const positions = [[-35, 38], [35, 38], [-35, -38], [35, -38]];
-  positions.forEach(([x, z]) => {
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 8, 6), pedMat);
-    body.position.set(x, 4, z);
-    scene.add(body);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(2, 8, 8), pedMat);
-    head.position.set(x, 10, z);
-    scene.add(head);
-  });
-}
-
-// ── VÉHICULES ────────────────────────────────────────
-const VEHICLE_CONFIGS = {
-  taxi:    { w: 5,  h: 3,   d: 9,  color: 0xffcc00 },
-  minibus: { w: 6,  h: 4.5, d: 13, color: 0xff6600 },
-  truck:   { w: 7,  h: 4.5, d: 15, color: 0xcc2200 },
-  car:     { w: 4.5,h: 2.8, d: 8,  color: 0x3399ff },
-  moto:    { w: 2,  h: 2.5, d: 4.5,color: 0x22cc44 },
+// Contrôleur d'intersection : NS et EO alternent
+const lights = {
+  Nord  : new AdaptiveLight('Nord',  0),
+  Sud   : new AdaptiveLight('Sud',   0),
+  Est   : new AdaptiveLight('Est',   1),
+  Ouest : new AdaptiveLight('Ouest', 1),
 };
-const TYPES = Object.keys(VEHICLE_CONFIGS);
 
-// Pistes bien séparées — 4 voies horizontales + 4 verticales
-const LANES = [
-  { axis:'x', z: -21, dir:  1 },
-  { axis:'x', z:  -7, dir:  1 },
-  { axis:'x', z:   7, dir: -1 },
-  { axis:'x', z:  21, dir: -1 },
-  { axis:'z', x: -21, dir:  1 },
-  { axis:'z', x:  -7, dir:  1 },
-  { axis:'z', x:   7, dir: -1 },
-  { axis:'z', x:  21, dir: -1 },
-];
+// Synchroniser NS et EO
+function syncLights(dt) {
+  // Paire NS
+  const ns = [lights.Nord, lights.Sud];
+  const eo = [lights.Est, lights.Ouest];
 
-let vehicleData = [];
-function initVehicles(count = 40) {
-  // Nettoyer les anciens meshes
-  vehicleMeshes.forEach(m => scene && scene.remove(m));
-  vehicleMeshes.length = 0;
-  vehicleData = [];
-
-  // Distribuer uniformément : ~5 véhicules par voie, bien espacés
-  const perLane = Math.ceil(count / LANES.length);
-  for (let laneIdx = 0; laneIdx < LANES.length; laneIdx++) {
-    for (let j = 0; j < perLane && vehicleData.length < count; j++) {
-      const type = TYPES[Math.floor(Math.random() * TYPES.length)];
-      const cfg  = VEHICLE_CONFIGS[type];
-      const lane = LANES[laneIdx];
-      // Progress [0.05 … 0.95] bien étalé, jamais aux extrêmes
-      const base = 0.1 + (j / perLane) * 0.8;
-      const progress = base + (Math.random() - 0.5) * 0.04;
-
-    const mesh = new THREE.Mesh(
-      new THREE.BoxGeometry(cfg.w, cfg.h, cfg.d),
-      new THREE.MeshLambertMaterial({ color: cfg.color })
-    );
-    mesh.castShadow = true;
-    scene.add(mesh);
-    vehicleMeshes.push(mesh);
-
-      // speed en unités/ms → ~30-50 unités/s = vitesse réaliste dans la scène
-      vehicleData.push({ type, cfg, lane, progress: Math.max(0.05, Math.min(0.95, progress)), speed: 0.00012 + Math.random() * 0.00008, stopped: false });
+  // Le maître de chaque paire = Nord et Est
+  [lights.Nord, lights.Est].forEach(master => {
+    const pairDirs = master.dir === 'Nord' ? ns : eo;
+    master.timeLeft -= dt;
+    if (master.timeLeft <= 0) {
+      master.nextPhase();
+      // L'autre de la paire suit
+      const other = pairDirs.find(l => l !== master);
+      other.phase = master.phase;
+      other.timeLeft = master.timeLeft;
+      other.greenDuration = master.greenDuration;
     }
-  }
+    // Synchro opposé
+    const other = pairDirs.find(l => l !== master);
+    other.phase = master.phase;
+    other.timeLeft = master.timeLeft;
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  VÉHICULES
+// ═══════════════════════════════════════════════════════
+let vehicles = [];
+let nextVehId = 0;
+
+const COLORS_VEH = ['#facc15','#60a5fa','#f87171','#4ade80','#c084fc','#fb923c','#34d399'];
+const TYPES = ['car','car','car','taxi','minibus','moto'];
+
+// Voies : chaque direction a des files d'attente
+// Vue du dessus : intersection centrée
+// Voitures viennent de l'extérieur, s'arrêtent au feu, traversent
+
+function spawnVehicle() {
+  const dir = DIRS[Math.floor(Math.random() * DIRS.length)];
+  vehicles.push({
+    id: nextVehId++,
+    dir,
+    type: TYPES[Math.floor(Math.random() * TYPES.length)],
+    color: COLORS_VEH[Math.floor(Math.random() * COLORS_VEH.length)],
+    progress: 0,       // 0 = arrivée, 1 = traversée complète
+    state: 'approach', // approach → waiting → crossing → exit
+    waitTime: 0,
+    lane: Math.floor(Math.random() * 2) // voie 0 ou 1
+  });
+}
+
+function spawnRate() {
+  const base = { normal: 0.015, rush: 0.06, incident: 0.04, nuit: 0.004 };
+  return base[scenario] || 0.015;
 }
 
 function updateVehicles(dt) {
-  vehicleData.forEach((v, i) => {
-    // Zone d'approche [0.42, 0.58] = zone carrefour
-    const nearIntersection = v.progress > 0.40 && v.progress < 0.60;
-    const atStop = v.progress > 0.45 && v.progress < 0.55;
-    v.stopped = false;
+  // Spawn
+  if (Math.random() < spawnRate() * dt * 60) spawnVehicle();
 
-    // Feu de la voie
-    const laneIdx = v.lane.axis === 'x' ? 0 : 2;
-    const phase = lightCycles[laneIdx]?.phase;
-    const isRed = phase === 'red' && !emergencyMode;
+  // Densités capteurs (voitures en attente par direction)
+  const density = { Nord:0, Sud:0, Est:0, Ouest:0 };
 
-    if (!nearIntersection) {
-      v.progress += v.speed * dt;
-    } else if (atStop && isRed) {
-      v.stopped = true; // Arrêt net au feu rouge
+  vehicles.forEach(v => {
+    const light = lights[v.dir];
+    const canGo = light.phase === 'green' || (emergency && v.dir === 'Est');
+
+    if (v.state === 'approach') {
+      v.progress += 0.008 * dt * 60;
+      if (v.progress >= 0.45) {
+        if (canGo) { v.state = 'crossing'; }
+        else { v.state = 'waiting'; v.progress = 0.45; density[v.dir]++; }
+      }
+    } else if (v.state === 'waiting') {
+      v.waitTime += dt;
+      density[v.dir]++;
+      if (canGo) { v.state = 'crossing'; }
+    } else if (v.state === 'crossing') {
+      v.progress += 0.012 * dt * 60;
+      if (v.progress >= 1) v.state = 'exit';
+    }
+  });
+
+  // Mettre à jour densités dans les feux
+  DIRS.forEach(d => { lights[d].density = density[d]; });
+
+  // Supprimer les voitures sorties
+  vehicles = vehicles.filter(v => v.state !== 'exit');
+
+  // Calcul attente
+  const waiting = vehicles.filter(v => v.state === 'waiting');
+  const avgWait = waiting.length > 0
+    ? waiting.reduce((s,v) => s+v.waitTime, 0) / waiting.length : 0;
+
+  // Simulation feux fixes (hypothétique) : attente fixe de 20s en moyenne
+  const fixedWait = 87 * (scenario === 'rush' ? 2.2 : scenario === 'nuit' ? 0.3 : 1);
+  const smartWait = Math.max(3, avgWait * 0.5 + density.Nord * 0.8);
+
+  return { avgWait: smartWait, fixedWait, density, vehicleCount: vehicles.length };
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDU CANVAS (vue du dessus)
+// ═══════════════════════════════════════════════════════
+const canvas = document.getElementById('sim');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width  = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+function drawScene(density) {
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2;
+  const roadW = Math.min(W,H) * 0.18;
+  const inter  = roadW * 1.1;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Fond
+  ctx.fillStyle = '#0d1b2a';
+  ctx.fillRect(0, 0, W, H);
+
+  // Herbe / zones
+  ctx.fillStyle = '#132a13';
+  [[cx-W/2, cy-H/2, cx-inter/2, cy-inter/2],
+   [cx+inter/2, cy-H/2, W/2, cy-inter/2],
+   [cx-W/2, cy+inter/2, cx-inter/2, H/2],
+   [cx+inter/2, cy+inter/2, W/2, H/2]].forEach(([x,y,w,h])=>{
+    ctx.fillRect(x,y,w,h);
+  });
+
+  // Routes
+  ctx.fillStyle = '#1e2532';
+  // Horizontale
+  ctx.fillRect(0, cy - roadW/2, W, roadW);
+  // Verticale
+  ctx.fillRect(cx - roadW/2, 0, roadW, H);
+
+  // Intersection centrale
+  ctx.fillStyle = '#252d3a';
+  ctx.fillRect(cx - inter/2, cy - inter/2, inter, inter);
+
+  // Lignes de voies (pointillés)
+  ctx.setLineDash([15, 15]);
+  ctx.strokeStyle = '#ffffff22';
+  ctx.lineWidth = 1.5;
+  // Horizontale milieu
+  ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(cx-inter/2, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+inter/2, cy); ctx.lineTo(W, cy); ctx.stroke();
+  // Verticale milieu
+  ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, cy-inter/2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, cy+inter/2); ctx.lineTo(cx, H); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Lignes stop (avant feux)
+  ctx.strokeStyle = '#ffffff55'; ctx.lineWidth = 2;
+  const stop = inter/2;
+  const w2 = roadW/2;
+  // Nord
+  ctx.beginPath(); ctx.moveTo(cx-w2, cy-stop+4); ctx.lineTo(cx, cy-stop+4); ctx.stroke();
+  // Sud
+  ctx.beginPath(); ctx.moveTo(cx, cy+stop-4); ctx.lineTo(cx+w2, cy+stop-4); ctx.stroke();
+  // Est
+  ctx.beginPath(); ctx.moveTo(cx+stop-4, cy); ctx.lineTo(cx+stop-4, cy+w2); ctx.stroke();
+  // Ouest
+  ctx.beginPath(); ctx.moveTo(cx-stop+4, cy-w2); ctx.lineTo(cx-stop+4, cy); ctx.stroke();
+
+  // Feux tricolores
+  drawLight('Nord',  cx - roadW*0.25, cy - stop - 16, density.Nord);
+  drawLight('Sud',   cx + roadW*0.25, cy + stop + 16, density.Sud, true);
+  drawLight('Est',   cx + stop + 16,  cy + roadW*0.25, density.Est, false, true);
+  drawLight('Ouest', cx - stop - 16,  cy - roadW*0.25, density.Ouest, false, true);
+
+  // Véhicules
+  drawVehicles(cx, cy, roadW, inter);
+
+  // Labels de direction + capteurs
+  drawLabels(cx, cy, roadW, inter, density);
+}
+
+function drawLight(dir, x, y, densityVal, flipY=false, isH=false) {
+  const light = lights[dir];
+  const w = isH ? 10 : 26, h = isH ? 26 : 10;
+
+  // Boîtier
+  ctx.fillStyle = '#111';
+  ctx.beginPath();
+  ctx.roundRect(x - w/2 - 2, y - h/2 - 2, w+4, h+4, 3);
+  ctx.fill();
+
+  const phases = [
+    { name:'red',    col:'#ef4444', dimCol:'#3f0d0d' },
+    { name:'yellow', col:'#eab308', dimCol:'#3f3000' },
+    { name:'green',  col:'#22c55e', dimCol:'#0a2c14' },
+  ];
+
+  phases.forEach((p, i) => {
+    const active = light.phase === p.name || (p.name === 'green' && emergency && dir === 'Est');
+    ctx.beginPath();
+    if (isH) {
+      ctx.arc(x + (-1+i) * (w/2), y, 4, 0, Math.PI*2);
     } else {
-      // Ralentissement à l'approche ou passage au vert
-      v.progress += v.speed * dt * (isRed ? 0 : 0.5);
+      ctx.arc(x, y + (-1+i) * (h/2), 4, 0, Math.PI*2);
+    }
+    ctx.fillStyle = active ? p.col : p.dimCol;
+    ctx.fill();
+
+    // Halo si actif
+    if (active) {
+      ctx.shadowColor = p.col;
+      ctx.shadowBlur = 12;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  });
+
+  // Timer
+  ctx.fillStyle = '#ffffff99';
+  ctx.font = 'bold 9px monospace';
+  ctx.textAlign = 'center';
+  const t = Math.max(0, Math.ceil(lights[dir === 'Nord' ? 'Nord' : dir === 'Sud' ? 'Nord' : dir === 'Est' ? 'Est' : 'Est'].timeLeft));
+  ctx.fillText(t + 's', x, y + (isH ? 16 : 20));
+}
+
+function drawVehicles(cx, cy, roadW, inter) {
+  const s = inter/2;
+
+  vehicles.forEach(v => {
+    const p = v.progress;
+    let vx, vy, angle = 0;
+    const laneOff = (v.lane - 0.5) * (roadW * 0.38);
+
+    switch(v.dir) {
+      case 'Nord':
+        vy = cy - s - (1-p) * (cy - s); // de haut vers centre
+        vx = cx - laneOff;
+        if (v.state === 'waiting') vy = cy - s + 5 + v.lane * 12;
+        if (v.state === 'crossing') { vy = cy - s + p * s * 2.2; vx = cx - laneOff + p * roadW * 0.3; }
+        angle = Math.PI;
+        break;
+      case 'Sud':
+        vy = cy + s + (1-p) * (cy - s);
+        vx = cx + laneOff;
+        if (v.state === 'waiting') vy = cy + s - 5 - v.lane * 12;
+        if (v.state === 'crossing') { vy = cy + s - p * s * 2.2; vx = cx + laneOff - p * roadW * 0.3; }
+        angle = 0;
+        break;
+      case 'Est':
+        vx = cx + s + (1-p) * (cx - s);
+        vy = cy + laneOff;
+        if (v.state === 'waiting') vx = cx + s - 5 - v.lane * 12;
+        if (v.state === 'crossing') { vx = cx + s - p * s * 2.2; vy = cy + laneOff - p * roadW * 0.3; }
+        angle = -Math.PI/2;
+        break;
+      case 'Ouest':
+        vx = cx - s - (1-p) * (cx - s);
+        vy = cy - laneOff;
+        if (v.state === 'waiting') vx = cx - s + 5 + v.lane * 12;
+        if (v.state === 'crossing') { vx = cx - s + p * s * 2.2; vy = cy - laneOff + p * roadW * 0.3; }
+        angle = Math.PI/2;
+        break;
     }
 
-    if (v.progress > 1) v.progress = 0;
+    const W = v.type === 'moto' ? 5 : v.type === 'minibus' ? 10 : 8;
+    const L = v.type === 'moto' ? 10 : v.type === 'minibus' ? 18 : 14;
 
-    // Calculer la position 3D — range 240 = ±120u du centre, bien visible
-    const t = v.progress;
-    const mid = 0.5;
-    const RANGE = 240;
-    let px, py = v.cfg.h / 2, pz, ry = 0;
+    ctx.save();
+    ctx.translate(vx, vy);
+    ctx.rotate(angle);
+    ctx.fillStyle = v.color;
+    ctx.beginPath();
+    ctx.roundRect(-W/2, -L/2, W, L, 2);
+    ctx.fill();
 
-    if (v.lane.axis === 'x') {
-      px = (t - mid) * RANGE * v.lane.dir;
-      pz = v.lane.z;
-      ry = v.lane.dir > 0 ? 0 : Math.PI;
-    } else {
-      pz = (t - mid) * RANGE * v.lane.dir;
-      px = v.lane.x;
-      ry = v.lane.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+    // Phares
+    ctx.fillStyle = '#fffde7';
+    ctx.fillRect(-W/2+1, -L/2, 2, 2);
+    ctx.fillRect(W/2-3, -L/2, 2, 2);
+
+    // Waiting = clignotement rouge
+    if (v.state === 'waiting' && tick % 30 < 15) {
+      ctx.fillStyle = '#ef444488';
+      ctx.fillRect(-W/2, L/2-3, W, 3);
     }
-
-    const mesh = vehicleMeshes[i];
-    mesh.position.set(px, py, pz);
-    mesh.rotation.y = ry;
+    ctx.restore();
   });
 }
 
-// ── TRAFFIC LIGHT CYCLE ──────────────────────────────
-function updateLightCycles(elapsed) {
-  lightCycles.forEach((lc, idx) => {
-    lc.timer += elapsed * 0.001;
-    const cycleLen = emergencyMode ? 6 : 12; // cycle plus court en urgence
-    const phase = lc.timer % cycleLen;
+function drawLabels(cx, cy, roadW, inter, density) {
+  const s = inter/2 + 35;
+  const dirs = [
+    { name:'Nord', x:cx, y:cy-s-20, dens:density.Nord },
+    { name:'Sud',  x:cx, y:cy+s+30, dens:density.Sud  },
+    { name:'Est',  x:cx+s+30, y:cy, dens:density.Est  },
+    { name:'Ouest',x:cx-s-30, y:cy, dens:density.Ouest},
+  ];
 
-    let newPhase;
-    if (emergencyMode) {
-      newPhase = idx < 2 ? 'green' : 'red'; // priorité aux 2 premiers feux
-    } else {
-      if      (phase < 5)  newPhase = 'green';
-      else if (phase < 6)  newPhase = 'yellow';
-      else                 newPhase = 'red';
-    }
+  dirs.forEach(d => {
+    const col = DIR_COLORS[d.name];
+    const light = lights[d.name];
+    const adapted = Math.abs(light.greenDuration - FIXED_GREEN) > 2;
 
-    lc.phase = newPhase;
+    ctx.font = 'bold 11px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = col;
+    ctx.fillText(d.name, d.x, d.y);
 
-    // Update les meshes
-    if (lc.group) {
-      lc.group.children.forEach(child => {
-        if (child.userData.lightType) {
-          const isActive = child.userData.lightType === newPhase ||
-                           (newPhase === 'green'  && child.userData.lightType === 'green')  ||
-                           (newPhase === 'yellow' && child.userData.lightType === 'yellow') ||
-                           (newPhase === 'red'    && child.userData.lightType === 'red');
-          child.material.color.setHex(isActive ? child.userData.activeColor : child.userData.dimColor);
-        }
-      });
+    // Capteur densité
+    ctx.font = '9px monospace';
+    ctx.fillStyle = d.dens > 5 ? '#ef4444' : d.dens > 2 ? '#eab308' : '#22c55e';
+    ctx.fillText(`📡 ${d.dens} veh.`, d.x, d.y + 12);
+
+    // Badge adapté
+    if (adapted && running) {
+      ctx.font = 'bold 8px Segoe UI';
+      ctx.fillStyle = '#06b6d4';
+      ctx.fillText(adapted ? `⚡${light.greenDuration.toFixed(0)}s` : '', d.x, d.y + 22);
     }
   });
 }
 
-// ── PLUIE : ANIMATION PARTICULES ────────────────────
-function animateRain() {
-  if (!rainParticles) return;
-  const pos = rainParticles.geometry.attributes.position.array;
-  for (let i = 1; i < pos.length; i += 3) {
-    pos[i] -= 3;
-    if (pos[i] < 0) pos[i] = 200;
+// ═══════════════════════════════════════════════════════
+//  BOUCLE PRINCIPALE
+// ═══════════════════════════════════════════════════════
+let last = 0;
+let simWait = 87;
+let simFixed = 87;
+
+function loop(ts) {
+  requestAnimationFrame(loop);
+  const dt = Math.min((ts - last) / 1000, 0.1);
+  last = ts;
+  tick++;
+
+  if (running) {
+    syncLights(dt);
+    const { avgWait, fixedWait, density, vehicleCount } = updateVehicles(dt);
+
+    simWait  = 0.97 * simWait  + 0.03 * avgWait;
+    simFixed = 0.97 * simFixed + 0.03 * fixedWait;
+
+    const gain = Math.max(0, ((simFixed - simWait) / simFixed * 100));
+
+    // Métriques UI
+    setText('m-wait', Math.round(simWait) + 's');
+    setText('m-veh',  vehicleCount);
+    setText('m-co2',  Math.round(100 - gain * 0.6) + '%');
+    setText('m-eff',  '+' + gain.toFixed(0) + '%');
+    setText('m-cycles', cyclesAdapted);
+
+    setBar('b-wait',  Math.min(100, simWait / 120 * 100));
+    setBar('b-veh',   Math.min(100, vehicleCount / 60 * 100));
+    setBar('b-co2',   Math.max(0, 100 - gain * 0.6));
+    setBar('b-eff',   Math.min(100, gain * 1.5));
+    setBar('b-cycles', Math.min(100, cyclesAdapted / 50 * 100));
+
+    // Comparaison
+    setText('c-classic', Math.round(simFixed) + 's');
+    setText('c-smart',   Math.round(simWait)  + 's');
+    setText('gainBadge', gain > 1
+      ? `🎯 EasyPass réduit l'attente de ${gain.toFixed(0)}% — économie ${(gain*0.7).toFixed(0)}% de CO₂`
+      : '📡 Capteurs actifs — Analyse en cours...');
+
+    // Panel algo
+    updateAlgoPanel(density);
+
+    drawScene(density);
+  } else {
+    drawScene({ Nord:0, Sud:0, Est:0, Ouest:0 });
   }
-  rainParticles.geometry.attributes.position.needsUpdate = true;
 }
 
-// ── FPS ──────────────────────────────────────────────
-function updateFps() {
-  frameCount++;
-  const now = performance.now();
-  if (now - lastFpsTime > 1000) {
-    document.getElementById('fpsLabel').textContent = frameCount + ' fps';
-    frameCount = 0; lastFpsTime = now;
-  }
+function setText(id, v) { const el=document.getElementById(id); if(el) el.textContent=v; }
+function setBar(id, pct) { const el=document.getElementById(id); if(el) el.style.width=Math.max(0,Math.min(100,pct))+'%'; }
+
+function updateAlgoPanel(density) {
+  const panel = document.getElementById('algoPanel');
+  panel.innerHTML = DIRS.map(dir => {
+    const l = lights[dir];
+    const phaseFr = { green:'🟢 VERT', yellow:'🟡 ORANGE', red:'🔴 ROUGE' }[l.phase];
+    const pct = Math.min(100, l.density / 10 * 100);
+    const adapted = Math.abs(l.greenDuration - FIXED_GREEN) > 2;
+    return `
+      <div class="algo-row">
+        <div class="algo-dir" style="color:${DIR_COLORS[dir]}">${dir} 📡</div>
+        <div class="algo-phase ${l.phase}">${phaseFr}</div>
+        <div class="algo-timer">${adapted ? `⚡ ${l.greenDuration.toFixed(0)}s (adapté)` : `${FIXED_GREEN}s (fixe)`}</div>
+        <div class="algo-density">${l.density} véhicules détectés</div>
+        <div class="density-bar"><div class="density-fill" style="width:${pct}%;background:${pct>70?'#ef4444':pct>40?'#eab308':'#22c55e'}"></div></div>
+      </div>
+    `;
+  }).join('');
 }
 
-// ── CAMÉRA ORBITALE DOUCE ────────────────────────────
-let orbitEnabled = true;
-const CAM_RADIUS = 200;
-const CAM_HEIGHT = 170;
-let orbitAngle = Math.PI / 4; // démarrer légèrement de côté
-
-// ── ANIMATION LOOP ───────────────────────────────────
-let lastTime = 0;
-function animate(ts = 0) {
-  requestAnimationFrame(animate);
-  const dt = Math.min(ts - lastTime, 50); // cap à 50ms pour éviter les sauts
-  lastTime = ts;
-
-  // Rotation orbitale lente (1 tour toutes les ~5 min)
-  if (orbitEnabled) {
-    orbitAngle += 0.0001 * dt;
-    camera.position.x = Math.sin(orbitAngle) * CAM_RADIUS;
-    camera.position.z = Math.cos(orbitAngle) * CAM_RADIUS;
-    camera.position.y = CAM_HEIGHT;
-    camera.lookAt(0, 0, 0);
-  }
-
-  updateVehicles(dt);
-  updateLightCycles(dt);
-  animateRain();
-  updateFps();
-
-  renderer.render(scene, camera);
+// ═══════════════════════════════════════════════════════
+//  CONTRÔLES
+// ═══════════════════════════════════════════════════════
+function toggleSim() {
+  running = !running;
+  document.getElementById('btnMain').textContent = running ? '⏹ Arrêter' : '▶ Démarrer';
+  document.getElementById('btnMain').className = 'btn ' + (running ? 'btn-stop' : 'btn-go');
+  document.getElementById('badge').textContent = running ? '▌▌ En cours' : '● Arrêtée';
+  document.getElementById('badge').className = 'badge ' + (running ? 'on' : 'off');
+  if (running) { cyclesAdapted = 0; vehicles = []; }
 }
 
-// ── INIT ────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  initScene();
-  initVehicles(40);
-  socket.emit('start');
+function setScen(s) {
+  scenario = s;
+  document.querySelectorAll('.scen-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('s-' + s)?.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════
+//  CHAT CLAUDE
+// ═══════════════════════════════════════════════════════
+function qc(t) { document.getElementById('cin').value = t; sendMsg(); }
+
+async function sendMsg() {
+  const input = document.getElementById('cin');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  addMsg('user', msg);
+  const think = addMsg('bot', 'Claude réfléchit...', true);
+  document.querySelector('.chat-in button').disabled = true;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/chat`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ message: msg, sessionId:'sim-session' })
+    });
+    const data = await res.json();
+    think.remove();
+    addMsg('bot', data.response || 'Commande exécutée !');
+    if (data.commands) data.commands.forEach(applyCmd);
+  } catch {
+    think.remove();
+    addMsg('bot', handleLocalCmd(msg));
+  }
+  document.querySelector('.chat-in button').disabled = false;
+}
+
+function addMsg(role, text, thinking=false) {
+  const el = document.createElement('div');
+  el.className = 'msg ' + (role==='user'?'user':'bot') + (thinking?' thinking':'');
+  el.textContent = text;
+  const c = document.getElementById('msgs');
+  c.appendChild(el);
+  c.scrollTop = c.scrollHeight;
+  return el;
+}
+
+function handleLocalCmd(msg) {
+  const m = msg.toLowerCase();
+  if (m.includes('rush') || m.includes('pointe')) { setScen('rush'); return '✅ Scénario Rush activé — trafic intense, les feux s\'adaptent automatiquement !'; }
+  if (m.includes('nuit')) { setScen('nuit'); return '🌙 Scénario Nuit activé — peu de véhicules, feux courts.'; }
+  if (m.includes('incident') || m.includes('accident')) { setScen('incident'); return '⚠️ Incident détecté ! Les capteurs rerouted le flux.'; }
+  if (m.includes('normal')) { setScen('normal'); return '☀️ Retour au scénario Normal.'; }
+  if (m.includes('urgence') || m.includes('ambulance')) {
+    emergency = !emergency;
+    return emergency ? '🚑 Mode urgence ! Voie Est prioritaire — feu vert permanent.' : '✅ Mode urgence désactivé.';
+  }
+  if (m.includes('capteur') || m.includes('comment')) {
+    return '📡 Les capteurs comptent les véhicules en attente sur chaque voie. L\'algorithme EasyPass ajuste la durée du feu vert : plus il y a de voitures, plus le feu reste vert longtemps (max 45s). Si une voie est vide, le feu passe rapidement au rouge pour libérer les autres.';
+  }
+  if (m.includes('co2') || m.includes('émission')) {
+    return `🌍 En réduisant les temps d'attente de ${Math.round(Math.max(0,(simFixed-simWait)/simFixed*100))}%, EasyPass réduit aussi les émissions CO₂ des moteurs au ralenti de ~${Math.round(Math.max(0,(simFixed-simWait)/simFixed*70))}%.`;
+  }
+  return `💬 Commande reçue. En mode local, dis-moi : "rush", "nuit", "incident", "urgence", ou pose des questions sur les capteurs et le CO₂.`;
+}
+
+function applyCmd(cmd) {
+  if (cmd.type === 'scenario') setScen(cmd.value);
+  if (cmd.type === 'emergency') { emergency = cmd.value; }
+}
+
+document.getElementById('cin').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
 });
-</script>
 
+// Lancer le rendu
+requestAnimationFrame(loop);
+resize();
+</script>
 </body>
 </html>
