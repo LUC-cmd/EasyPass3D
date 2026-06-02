@@ -368,9 +368,11 @@ let emergencyMode = false;
 let weatherMode = 'clear';
 
 // ─── CONFIG BACKEND (auto local/prod) ───────────────
-const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+// En local → backend séparé sur :5000
+// En prod sur Render → même domaine (backend sert aussi le frontend)
+const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:5000'
-  : 'https://easypass3d.onrender.com';
+  : window.location.origin;
 
 // ─── SOCKET ─────────────────────────────────────────
 const socket = io(BACKEND_URL, {

@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
+const path = require('path');
 const socketIo = require('socket.io');
 const Anthropic = require('@anthropic-ai/sdk');
 const { TrafficSimulation } = require('./simulation');
@@ -29,6 +30,9 @@ const io = socketIo(server, {
 
 app.use(cors({ origin: ALLOWED_ORIGINS }));
 app.use(express.json());
+
+// ── Servir le frontend statique (dossier public/) ──
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Health check pour Render
 app.get('/health', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
