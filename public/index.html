@@ -405,43 +405,61 @@ function calcDur(q){
 }
 
 function stepLights(dt){
-  // Master NS = N, Master EO = E
-  L.N.tl-=dt;
+  // ─── CORRECTION BUGS ──────────────────────────────────────
+  // 1. On décrémente SEULEMENT le master de la paire ACTIVE (green/yellow)
+  // 2. La paire rouge décrémente aussi pour l'affichage du compte à rebours
+  // NS actif = N est green ou yellow / EO actif = E est green ou yellow
+  const nsIsActive = L.N.phase==='green' || L.N.phase==='yellow';
+  const mk = nsIsActive ? 'N' : 'E'; // master key
 
-  if(L.N.tl<=0){
-    if(L.N.phase==='green'){
-      // NS → jaune
-      L.N.phase=L.S.phase='yellow';
-      L.N.tl=L.S.tl=3;
-    } else if(L.N.phase==='yellow'){
-      // Basculement
-      nsActive=!nsActive;
-      if(nsActive){
-        // NS devient vert
-        const q=L.N.q+L.S.q;
-        const d=calcDur(q);
-        const adapted=Math.abs(d-BASE)>1.5;
-        if(adapted){L.N.nc++;L.S.nc++;totalAdapt++;}
-        L.N.phase=L.S.phase='green'; L.N.dur=L.S.dur=d; L.N.tl=L.S.tl=d;
-        L.E.phase=L.O.phase='red';   L.E.tl=L.O.tl=d+3;
-        whistle(); flash();
-        addNote(`✅ Voies Nord/Sud → VERT · ${d.toFixed(0)}s${adapted?` (adapté, ${q} veh.)`:''}`);
+  // Décrémenter le master actif
+  L[mk].tl -= dt;
+
+  if(L[mk].tl <= 0){
+    if(L[mk].phase === 'green'){
+      // green → yellow (3s de orange)
+      if(nsIsActive){
+        L.N.phase=L.S.phase='yellow'; L.N.tl=L.S.tl=3;
       } else {
-        // EO devient vert
+        L.E.phase=L.O.phase='yellow'; L.E.tl=L.O.tl=3;
+      }
+
+    } else if(L[mk].phase === 'yellow'){
+      // yellow → l'AUTRE paire passe au vert
+      if(nsIsActive){
+        // NS était actif → EO devient vert
         const q=L.E.q+L.O.q;
         const d=calcDur(q);
-        const adapted=Math.abs(d-BASE)>1.5;
-        if(adapted){L.E.nc++;L.O.nc++;totalAdapt++;}
+        const ad=Math.abs(d-BASE)>1.5;
+        if(ad){L.E.nc++;L.O.nc++;totalAdapt++;}
         L.E.phase=L.O.phase='green'; L.E.dur=L.O.dur=d; L.E.tl=L.O.tl=d;
-        L.N.phase=L.S.phase='red';   L.N.tl=L.S.tl=d+3;
+        L.N.phase=L.S.phase='red';   L.N.dur=L.S.dur=d; L.N.tl=L.S.tl=d+3;
         whistle(); flash();
-        addNote(`✅ Voies Est/Ouest → VERT · ${d.toFixed(0)}s${adapted?` (adapté, ${q} veh.)`:''}`);
+        addNote(`✅ Est/Ouest → VERT · ${d.toFixed(0)}s${ad?` ⚡ adapté (${q} veh.)`:''}`);
+      } else {
+        // EO était actif → NS devient vert
+        const q=L.N.q+L.S.q;
+        const d=calcDur(q);
+        const ad=Math.abs(d-BASE)>1.5;
+        if(ad){L.N.nc++;L.S.nc++;totalAdapt++;}
+        L.N.phase=L.S.phase='green'; L.N.dur=L.S.dur=d; L.N.tl=L.S.tl=d;
+        L.E.phase=L.O.phase='red';   L.E.dur=L.O.dur=d; L.E.tl=L.O.tl=d+3;
+        whistle(); flash();
+        addNote(`✅ Nord/Sud → VERT · ${d.toFixed(0)}s${ad?` ⚡ adapté (${q} veh.)`:''}`);
       }
-    } else {
-      L.N.tl=0.3;
     }
   }
-  // Synchro paires
+
+  // Décrémenter aussi le timer de la paire ROUGE (pour affichage compte à rebours)
+  if(nsIsActive){
+    L.E.tl=Math.max(0, L.E.tl-dt);
+    L.O.tl=L.E.tl;
+  } else {
+    L.N.tl=Math.max(0, L.N.tl-dt);
+    L.S.tl=L.N.tl;
+  }
+
+  // Synchro paires complète (S suit N, O suit E)
   L.S.phase=L.N.phase; L.S.tl=L.N.tl; L.S.dur=L.N.dur;
   L.O.phase=L.E.phase; L.O.tl=L.E.tl; L.O.dur=L.E.dur;
 }
