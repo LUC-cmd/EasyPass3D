@@ -13,7 +13,7 @@ services:
       - key: ANTHROPIC_API_KEY
         sync: false          # à renseigner manuellement dans le dashboard Render
       - key: FRONTEND_URL
-        value: https://easypass3d.netlify.app
+        value: https://easypass3d-seic.netlify.app
       - key: NODE_VERSION
         value: "18"
     healthCheckPath: /health
