@@ -14,6 +14,7 @@ const ALLOWED_ORIGINS = [
   'http://localhost:3001',
   'http://127.0.0.1:3001',
   'https://easypass3d-seic.netlify.app',
+  'https://easypass3d-suitflow.netlify.app',
   process.env.FRONTEND_URL,
   /\.netlify\.app$/,   // tout sous-domaine Netlify
   /\.onrender\.com$/   // preview Render
