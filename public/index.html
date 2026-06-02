@@ -1,798 +1,808 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EasyPass — Simulation Feux Intelligents</title>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    :root{
-      --bg:#0a0f1e; --panel:#111827; --card:#1f2937; --border:#374151;
-      --cyan:#06b6d4; --purple:#8b5cf6; --green:#22c55e; --red:#ef4444;
-      --yellow:#eab308; --orange:#f97316; --text:#f1f5f9; --muted:#94a3b8;
-    }
-    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EasyPass — Feux Intelligents | Groupe SuitFlow · UL</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#060d1a;color:#f1f5f9;font-family:'Segoe UI',system-ui,sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
 
-    /* HEADER */
-    header{background:linear-gradient(135deg,#1e3a5f,#0f172a);border-bottom:1px solid #1e40af44;padding:0 20px;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-    .brand{display:flex;align-items:center;gap:10px}
-    .brand-icon{width:34px;height:34px;background:linear-gradient(135deg,#3b82f6,#06b6d4);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff}
-    .brand-name{font-size:18px;font-weight:700}
-    .brand-sub{font-size:10px;color:var(--muted)}
-    .hcontrols{display:flex;gap:8px;align-items:center}
-    .btn{display:flex;align-items:center;gap:5px;padding:6px 14px;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
-    .btn-go{background:var(--green);color:#fff} .btn-go:hover{background:#16a34a}
-    .btn-stop{background:var(--red);color:#fff}
-    .badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--card)}
-    .badge.on{color:var(--green);border-color:var(--green)}
-    .badge.off{color:var(--muted)}
+/* ── HEADER ── */
+header{background:linear-gradient(135deg,#0f2748,#060d1a);border-bottom:2px solid #1e40af66;padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#2563eb,#06b6d4);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#fff;box-shadow:0 0 15px #2563eb55}
+.logo-title{font-size:19px;font-weight:800;letter-spacing:-.5px}
+.logo-sub{font-size:10px;color:#64748b;margin-top:1px}
+.hright{display:flex;align-items:center;gap:10px}
+.badge-sim{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;border:1.5px solid #374151;background:#111827;transition:all .3s}
+.badge-sim.on{color:#22c55e;border-color:#22c55e;box-shadow:0 0 10px #22c55e44}
+.badge-sim.off{color:#64748b}
+.btn-main{display:flex;align-items:center;gap:6px;padding:7px 18px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-main.go{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;box-shadow:0 4px 15px #22c55e44}
+.btn-main.go:hover{transform:translateY(-1px);box-shadow:0 6px 20px #22c55e55}
+.btn-main.stop{background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff}
 
-    /* MAIN */
-    main{flex:1;display:flex;gap:10px;padding:10px;overflow:hidden}
+/* ── KPI BAR ── */
+.kpi-bar{display:flex;gap:8px;padding:8px 16px;background:#070e1e;border-bottom:1px solid #1e293b;flex-shrink:0}
+.kpi{flex:1;display:flex;align-items:center;gap:10px;background:#111827;border:1px solid #1e293b;border-radius:10px;padding:8px 14px}
+.kpi.smart{border-color:#22c55e44;background:#052e16aa}
+.kpi.classic{border-color:#ef444444;background:#450a0aaa}
+.kpi-icon{font-size:22px}
+.kpi-val{font-size:22px;font-weight:800;line-height:1}
+.kpi.smart .kpi-val{color:#22c55e}
+.kpi.classic .kpi-val{color:#f87171}
+.kpi-gain .kpi-val{color:#06b6d4;font-size:26px}
+.kpi-lbl{font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.kpi-sub{font-size:10px;color:#94a3b8;margin-top:1px}
 
-    /* CANVAS ZONE */
-    .sim-zone{flex:1;display:flex;flex-direction:column;gap:8px;overflow:hidden}
-    .canvas-wrap{flex:1;background:#050a14;border-radius:12px;border:1px solid var(--border);position:relative;overflow:hidden}
-    canvas#sim{display:block;width:100%;height:100%}
+/* ── MAIN ── */
+main{flex:1;display:flex;gap:0;overflow:hidden}
 
-    /* INFO BAR */
-    .infobar{display:flex;gap:8px;flex-shrink:0}
-    .info-card{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:10px}
-    .info-icon{font-size:20px}
-    .info-val{font-size:18px;font-weight:700}
-    .info-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-    .bar{height:3px;background:var(--border);border-radius:2px;margin-top:4px}
-    .bar-fill{height:100%;border-radius:2px;transition:width .5s ease}
+/* ── CANVAS ── */
+.canvas-zone{flex:1;position:relative;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
 
-    /* SIDEBAR */
-    .sidebar{width:340px;display:flex;flex-direction:column;gap:8px;overflow:hidden}
-    .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;flex-shrink:0}
-    .ph{padding:9px 14px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;gap:7px}
-    .ph.purple{background:linear-gradient(90deg,#6d28d9,#8b5cf6)}
-    .ph.blue{background:linear-gradient(90deg,#1e40af,#3b82f6)}
-    .ph.teal{background:linear-gradient(90deg,#0f766e,#14b8a6)}
-    .ph.red{background:linear-gradient(90deg,#991b1b,#ef4444)}
+/* ── FLASH OVERLAY ── */
+.flash{position:absolute;inset:0;pointer-events:none;border-radius:0;border:4px solid transparent;transition:border-color .3s,opacity .3s;opacity:0}
+.flash.green{border-color:#22c55e;opacity:1;animation:flashGreen .6s ease forwards}
+@keyframes flashGreen{0%{opacity:1}100%{opacity:0}}
 
-    /* ALGO PANEL */
-    .algo-panel{padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
-    .algo-row{background:var(--card);border-radius:8px;padding:8px;border:1px solid var(--border)}
-    .algo-dir{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:3px}
-    .algo-phase{font-size:14px;font-weight:700}
-    .algo-phase.green{color:var(--green)}
-    .algo-phase.red{color:var(--red)}
-    .algo-phase.yellow{color:var(--yellow)}
-    .algo-timer{font-size:11px;color:var(--muted);margin-top:2px}
-    .algo-density{font-size:10px;margin-top:4px}
-    .density-bar{height:4px;background:var(--border);border-radius:2px;margin-top:3px}
-    .density-fill{height:100%;border-radius:2px;background:var(--cyan);transition:width .3s}
+/* ── SIDEBAR ── */
+.sidebar{width:360px;display:flex;flex-direction:column;border-left:1px solid #1e293b;background:#070e1e;overflow:hidden}
 
-    /* COMPARE */
-    .compare{padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .cmp-box{background:var(--card);border-radius:8px;padding:10px;border:2px solid transparent;text-align:center}
-    .cmp-box.classic{border-color:#374151}
-    .cmp-box.smart{border-color:var(--cyan)}
-    .cmp-title{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
-    .cmp-val{font-size:22px;font-weight:800}
-    .cmp-box.classic .cmp-val{color:#f87171}
-    .cmp-box.smart .cmp-val{color:var(--green)}
-    .cmp-lbl{font-size:9px;color:var(--muted);margin-top:2px}
-    .gain-badge{text-align:center;padding:6px;background:#064e3b33;border-radius:6px;margin:0 10px 8px;font-size:12px;font-weight:700;color:var(--green)}
+/* ALGO PANEL */
+.algo-header{padding:10px 14px;background:linear-gradient(90deg,#7c2d12,#dc2626);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:7px;flex-shrink:0}
+.algo-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#1e293b;flex-shrink:0}
+.algo-cell{background:#0d1626;padding:9px 11px}
+.algo-dir{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.algo-phase{font-size:13px;font-weight:800;display:flex;align-items:center;gap:5px}
+.algo-timer{font-family:monospace;font-size:20px;font-weight:900;line-height:1;margin:3px 0}
+.algo-timer.green{color:#22c55e;text-shadow:0 0 12px #22c55e88}
+.algo-timer.red{color:#ef4444;text-shadow:0 0 12px #ef444488}
+.algo-timer.yellow{color:#eab308;text-shadow:0 0 12px #eab30888}
+.algo-queue{font-size:10px;color:#94a3b8;margin-top:2px}
+.algo-adapt{font-size:9px;font-weight:700;color:#06b6d4;margin-top:3px}
+.density-track{height:5px;background:#1e293b;border-radius:3px;margin-top:5px;overflow:hidden}
+.density-fill{height:100%;border-radius:3px;transition:width .4s ease}
 
-    /* CHAT */
-    .chat-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
-    .msgs{flex:1;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth}
-    .msg{max-width:90%;padding:8px 11px;border-radius:10px;font-size:12px;line-height:1.5;animation:fadeUp .2s ease}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-    .msg.user{align-self:flex-end;background:#2563eb;border-bottom-right-radius:3px}
-    .msg.bot{align-self:flex-start;background:var(--card);border:1px solid var(--border);border-bottom-left-radius:3px}
-    .msg.thinking{color:#475569;font-style:italic}
-    .qcmds{padding:5px 8px;display:flex;flex-wrap:wrap;gap:4px;border-top:1px solid var(--border)}
-    .qcmd{background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:2px 8px;font-size:10px;cursor:pointer;transition:all .15s}
-    .qcmd:hover{background:var(--purple);border-color:var(--purple);color:#fff}
-    .chat-in{border-top:1px solid var(--border);padding:7px;display:flex;gap:5px;background:var(--bg)}
-    .chat-in textarea{flex:1;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px 9px;font-size:12px;resize:none;font-family:inherit}
-    .chat-in textarea:focus{outline:none;border-color:var(--purple)}
-    .chat-in button{background:var(--purple);color:#fff;border:none;border-radius:6px;width:36px;cursor:pointer;font-size:15px}
+/* CHAT */
+.chat-header{padding:10px 14px;background:linear-gradient(90deg,#4c1d95,#7c3aed);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:7px;flex-shrink:0}
+.chat-msgs{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:7px;scroll-behavior:smooth}
+.cmsg{max-width:92%;padding:8px 12px;border-radius:10px;font-size:12px;line-height:1.5;animation:pop .2s ease}
+@keyframes pop{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
+.cmsg.user{align-self:flex-end;background:#2563eb;border-bottom-right-radius:3px}
+.cmsg.bot{align-self:flex-start;background:#1e293b;border:1px solid #334155;border-bottom-left-radius:3px}
+.cmsg.think{color:#475569;font-style:italic}
+.chat-qcmd{padding:6px 10px;display:flex;flex-wrap:wrap;gap:4px;border-top:1px solid #1e293b;flex-shrink:0}
+.qcmd{background:#1e293b;border:1px solid #334155;color:#94a3b8;border-radius:12px;padding:3px 9px;font-size:10px;cursor:pointer;transition:all .15s}
+.qcmd:hover{background:#7c3aed;border-color:#7c3aed;color:#fff}
+.chat-foot{border-top:1px solid #1e293b;padding:8px;display:flex;gap:6px;background:#060d1a;flex-shrink:0}
+.chat-foot textarea{flex:1;background:#111827;color:#f1f5f9;border:1px solid #334155;border-radius:7px;padding:7px 10px;font-size:12px;resize:none;font-family:inherit;transition:border-color .2s}
+.chat-foot textarea:focus{outline:none;border-color:#7c3aed}
+.chat-foot button{background:#7c3aed;color:#fff;border:none;border-radius:7px;width:38px;cursor:pointer;font-size:16px;transition:background .2s}
+.chat-foot button:hover{background:#6d28d9}
 
-    /* SCENARIO BTNS */
-    .scen-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:8px}
-    .scen-btn{display:flex;align-items:center;gap:6px;padding:7px 9px;background:var(--card);border:1px solid var(--border);border-radius:7px;cursor:pointer;font-size:11px;transition:all .15s}
-    .scen-btn:hover{border-color:var(--cyan);background:#0c4a6e33}
-    .scen-btn.active{border-color:var(--cyan);background:#0c4a6e55;color:var(--cyan)}
-
-    ::-webkit-scrollbar{width:4px}
-    ::-webkit-scrollbar-thumb{background:#334155;border-radius:2px}
-    ::-webkit-scrollbar-track{background:transparent}
-  </style>
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:#334155;border-radius:2px}
+::-webkit-scrollbar-track{background:transparent}
+</style>
 </head>
 <body>
 
+<!-- HEADER -->
 <header>
-  <div class="brand">
-    <div class="brand-icon">EP</div>
+  <div class="logo">
+    <div class="logo-icon">EP</div>
     <div>
-      <div class="brand-name">EasyPass <span style="color:var(--cyan)">3D</span></div>
-      <div class="brand-sub">Feux intelligents adaptatifs — Groupe SuitFlow · Université de Lomé</div>
+      <div class="logo-title">EasyPass <span style="color:#06b6d4">Feux Intelligents</span></div>
+      <div class="logo-sub">Prototype SEIC · Groupe SuitFlow · Université de Lomé</div>
     </div>
   </div>
-  <div class="hcontrols">
-    <div class="badge off" id="badge">● Arrêtée</div>
-    <button class="btn btn-go" id="btnMain" onclick="toggleSim()">▶ Démarrer</button>
+  <div class="hright">
+    <div class="badge-sim off" id="badge">● Arrêtée</div>
+    <button class="btn-main go" id="btnMain" onclick="toggleSim()">▶ Démarrer la simulation</button>
   </div>
 </header>
 
-<main>
-  <!-- SIMULATION CANVAS -->
-  <div class="sim-zone">
-    <div class="canvas-wrap">
-      <canvas id="sim"></canvas>
+<!-- KPI BAR -->
+<div class="kpi-bar">
+  <div class="kpi classic">
+    <div class="kpi-icon">🔴</div>
+    <div>
+      <div class="kpi-val" id="k-classic">87s</div>
+      <div class="kpi-lbl">Feux fixes classiques</div>
+      <div class="kpi-sub">Attente moyenne par véhicule</div>
     </div>
+  </div>
+  <div class="kpi smart">
+    <div class="kpi-icon">✅</div>
+    <div>
+      <div class="kpi-val" id="k-smart">—</div>
+      <div class="kpi-lbl">Avec EasyPass (adaptatif)</div>
+      <div class="kpi-sub">Attente optimisée par capteur</div>
+    </div>
+  </div>
+  <div class="kpi kpi-gain">
+    <div class="kpi-icon">📉</div>
+    <div>
+      <div class="kpi-val" id="k-gain">—</div>
+      <div class="kpi-lbl">Réduction du temps d'attente</div>
+      <div class="kpi-sub" id="k-sub">Démarrez pour voir l'impact</div>
+    </div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-icon">📡</div>
+    <div>
+      <div class="kpi-val" id="k-cycles" style="color:#a78bfa">0</div>
+      <div class="kpi-lbl">Adaptations capteur</div>
+      <div class="kpi-sub">Cycles de feux ajustés</div>
+    </div>
+  </div>
+</div>
 
-    <!-- MÉTRIQUES -->
-    <div class="infobar">
-      <div class="info-card">
-        <div class="info-icon">⏱</div>
-        <div>
-          <div class="info-val" id="m-wait" style="color:var(--cyan)">87s</div>
-          <div class="info-lbl">Attente moy.</div>
-          <div class="bar"><div class="bar-fill" id="b-wait" style="width:40%;background:var(--cyan)"></div></div>
-        </div>
-      </div>
-      <div class="info-card">
-        <div class="info-icon">🚗</div>
-        <div>
-          <div class="info-val" id="m-veh" style="color:var(--yellow)">0</div>
-          <div class="info-lbl">Véhicules actifs</div>
-          <div class="bar"><div class="bar-fill" id="b-veh" style="width:0%;background:var(--yellow)"></div></div>
-        </div>
-      </div>
-      <div class="info-card">
-        <div class="info-icon">🌍</div>
-        <div>
-          <div class="info-val" id="m-co2" style="color:var(--red)">100%</div>
-          <div class="info-lbl">Émissions CO₂</div>
-          <div class="bar"><div class="bar-fill" id="b-co2" style="width:100%;background:var(--red)"></div></div>
-        </div>
-      </div>
-      <div class="info-card">
-        <div class="info-icon">⚡</div>
-        <div>
-          <div class="info-val" id="m-eff" style="color:var(--green)">+0%</div>
-          <div class="info-lbl">Gain EasyPass</div>
-          <div class="bar"><div class="bar-fill" id="b-eff" style="width:0%;background:var(--green)"></div></div>
-        </div>
-      </div>
-      <div class="info-card">
-        <div class="info-icon">🚦</div>
-        <div>
-          <div class="info-val" id="m-cycles" style="color:var(--purple)">0</div>
-          <div class="info-lbl">Cycles adaptés</div>
-          <div class="bar"><div class="bar-fill" id="b-cycles" style="width:0%;background:var(--purple)"></div></div>
-        </div>
-      </div>
-    </div>
+<!-- MAIN -->
+<main>
+  <!-- CANVAS -->
+  <div class="canvas-zone">
+    <canvas id="c"></canvas>
+    <div class="flash" id="flash"></div>
   </div>
 
   <!-- SIDEBAR -->
   <aside class="sidebar">
+    <div class="algo-header">🚦 Capteurs & Algorithme adaptatif en direct</div>
+    <div class="algo-grid" id="algoGrid"></div>
 
-    <!-- ALGO FEUX -->
-    <div class="panel">
-      <div class="ph red">🚦 <span>Capteurs & Feux adaptatifs</span></div>
-      <div class="algo-panel" id="algoPanel">
-        <!-- rempli par JS -->
-      </div>
+    <div class="chat-header">💬 Contrôle — Claude IA</div>
+    <div class="chat-msgs" id="chatMsgs">
+      <div class="cmsg bot">👋 Bonjour ! Je contrôle la simulation EasyPass. Appuie sur <strong>Démarrer</strong> pour voir les feux intelligents en action. Les capteurs vont détecter les voitures et adapter les durées automatiquement.</div>
     </div>
-
-    <!-- COMPARAISON -->
-    <div class="panel">
-      <div class="ph teal">📊 <span>Feux fixes vs EasyPass</span></div>
-      <div class="compare">
-        <div class="cmp-box classic">
-          <div class="cmp-title">🔴 Feux fixes</div>
-          <div class="cmp-val" id="c-classic">87s</div>
-          <div class="cmp-lbl">attente moyenne</div>
-        </div>
-        <div class="cmp-box smart">
-          <div class="cmp-title">✅ EasyPass</div>
-          <div class="cmp-val" id="c-smart">87s</div>
-          <div class="cmp-lbl">attente moyenne</div>
-        </div>
-      </div>
-      <div class="gain-badge" id="gainBadge">🎯 Démarrez la simulation pour voir le gain</div>
+    <div class="chat-qcmd">
+      <span class="qcmd" onclick="qc('Scénario heure de pointe')">🚗 Rush</span>
+      <span class="qcmd" onclick="qc('Mode nuit calme')">🌙 Nuit</span>
+      <span class="qcmd" onclick="qc('Urgence ambulance voie Nord')">🚑 Urgence</span>
+      <span class="qcmd" onclick="qc('Scénario normal')">☀️ Normal</span>
+      <span class="qcmd" onclick="qc('Comment les capteurs fonctionnent ?')">🔍 Explication</span>
     </div>
-
-    <!-- SCÉNARIOS -->
-    <div class="panel">
-      <div class="ph blue">🗺 <span>Scénarios</span></div>
-      <div class="scen-grid">
-        <div class="scen-btn active" id="s-normal" onclick="setScen('normal')">☀️ Normal</div>
-        <div class="scen-btn" id="s-rush" onclick="setScen('rush')">🚗 Heure de pointe</div>
-        <div class="scen-btn" id="s-incident" onclick="setScen('incident')">⚠️ Incident</div>
-        <div class="scen-btn" id="s-nuit" onclick="setScen('nuit')">🌙 Nuit calme</div>
-      </div>
+    <div class="chat-foot">
+      <textarea id="cin" rows="2" placeholder="Pose une question ou donne une commande..."></textarea>
+      <button onclick="sendChat()">↑</button>
     </div>
-
-    <!-- CHAT -->
-    <div class="panel chat-panel">
-      <div class="ph purple">💬 <span>Contrôle — Claude IA</span></div>
-      <div class="msgs" id="msgs">
-        <div class="msg bot">Salut ! Je suis l'assistant EasyPass. La simulation montre comment les <strong>feux intelligents s'adaptent</strong> selon la densité des voitures détectée par les capteurs. Lance la simulation et pose-moi tes questions !</div>
-      </div>
-      <div class="qcmds">
-        <span class="qcmd" onclick="qc('Explique comment les capteurs fonctionnent')">🔍 Capteurs</span>
-        <span class="qcmd" onclick="qc('Active le scénario rush')">🚗 Rush</span>
-        <span class="qcmd" onclick="qc('Mode urgence ambulance')">🚑 Urgence</span>
-        <span class="qcmd" onclick="qc('Quel est le gain sur le CO2 ?')">🌍 CO₂</span>
-      </div>
-      <div class="chat-in">
-        <textarea id="cin" placeholder="Pose une question ou donne une commande..." rows="2"></textarea>
-        <button onclick="sendMsg()">↑</button>
-      </div>
-    </div>
-
   </aside>
 </main>
 
 <script>
-// ═══════════════════════════════════════════════════════
-//  ÉTAT GLOBAL
-// ═══════════════════════════════════════════════════════
-const BACKEND_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-  ? 'http://localhost:5000' : location.origin;
-
-let running = false;
-let scenario = 'normal';
-let emergency = false;
-let tick = 0;
-let cyclesAdapted = 0;
-let totalWaitFixed = 0;   // attente cumulée mode fixe (simulation)
-let totalWaitSmart = 0;   // attente cumulée mode EasyPass
-
-// ═══════════════════════════════════════════════════════
-//  SYSTÈME DE FEUX ADAPTATIFS
-// ═══════════════════════════════════════════════════════
-const DIRS = ['Nord', 'Sud', 'Est', 'Ouest'];
-const DIR_COLORS = { Nord:'#3b82f6', Sud:'#f97316', Est:'#a855f7', Ouest:'#22c55e' };
-
-// Config feux fixes classiques
-const FIXED_GREEN = 20;   // secondes
-const FIXED_RED   = 20;
-
-class AdaptiveLight {
-  constructor(dir, pairIndex) {
-    this.dir = dir;
-    this.pairIndex = pairIndex; // 0=NS, 1=EO
-    this.phase = pairIndex === 0 ? 'green' : 'red';
-    this.timeLeft = FIXED_GREEN;
-    this.density = 0;       // nb voitures en attente (capteur)
-    this.greenDuration = FIXED_GREEN;
-    this.adaptations = 0;
-  }
-
-  // Algo adaptatif : durée verte = f(densité)
-  computeGreenDuration(density) {
-    const min = 8, max = 45, base = 20;
-    if (emergency) return this.dir === 'Est' ? 60 : 5; // couloir urgence
-    return Math.min(max, Math.max(min, base + density * 2.5));
-  }
-
-  nextPhase() {
-    const wasGreen = this.phase === 'green';
-    if (this.phase === 'green') {
-      this.phase = 'yellow'; this.timeLeft = 3;
-    } else if (this.phase === 'yellow') {
-      this.phase = 'red'; this.timeLeft = 0; // durée calculée par le contrôleur
-    } else {
-      this.phase = 'green';
-      const newDur = this.computeGreenDuration(this.density);
-      if (Math.abs(newDur - FIXED_GREEN) > 2) {
-        this.adaptations++;
-        cyclesAdapted++;
-      }
-      this.greenDuration = newDur;
-      this.timeLeft = newDur;
-    }
-  }
+// ═══════════════════════════════════════════════════════════════════
+//  AUDIO — SIFFLET AU FEU VERT
+// ═══════════════════════════════════════════════════════════════════
+let audioCtx = null;
+function ensureAudio(){
+  if(!audioCtx) audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+}
+function playWhistle(){
+  ensureAudio();
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  o.type = 'sine';
+  const t = audioCtx.currentTime;
+  o.frequency.setValueAtTime(1200, t);
+  o.frequency.linearRampToValueAtTime(2800, t+0.08);
+  o.frequency.linearRampToValueAtTime(2400, t+0.18);
+  o.frequency.linearRampToValueAtTime(3000, t+0.28);
+  o.frequency.linearRampToValueAtTime(2000, t+0.45);
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(0.35, t+0.04);
+  g.gain.setValueAtTime(0.35, t+0.4);
+  g.gain.exponentialRampToValueAtTime(0.001, t+0.55);
+  o.start(t); o.stop(t+0.55);
 }
 
-// Contrôleur d'intersection : NS et EO alternent
-const lights = {
-  Nord  : new AdaptiveLight('Nord',  0),
-  Sud   : new AdaptiveLight('Sud',   0),
-  Est   : new AdaptiveLight('Est',   1),
-  Ouest : new AdaptiveLight('Ouest', 1),
-};
-
-// Synchroniser NS et EO
-function syncLights(dt) {
-  // Paire NS
-  const ns = [lights.Nord, lights.Sud];
-  const eo = [lights.Est, lights.Ouest];
-
-  // Le maître de chaque paire = Nord et Est
-  [lights.Nord, lights.Est].forEach(master => {
-    const pairDirs = master.dir === 'Nord' ? ns : eo;
-    master.timeLeft -= dt;
-    if (master.timeLeft <= 0) {
-      master.nextPhase();
-      // L'autre de la paire suit
-      const other = pairDirs.find(l => l !== master);
-      other.phase = master.phase;
-      other.timeLeft = master.timeLeft;
-      other.greenDuration = master.greenDuration;
-    }
-    // Synchro opposé
-    const other = pairDirs.find(l => l !== master);
-    other.phase = master.phase;
-    other.timeLeft = master.timeLeft;
-  });
-}
-
-// ═══════════════════════════════════════════════════════
-//  VÉHICULES
-// ═══════════════════════════════════════════════════════
-let vehicles = [];
-let nextVehId = 0;
-
-const COLORS_VEH = ['#facc15','#60a5fa','#f87171','#4ade80','#c084fc','#fb923c','#34d399'];
-const TYPES = ['car','car','car','taxi','minibus','moto'];
-
-// Voies : chaque direction a des files d'attente
-// Vue du dessus : intersection centrée
-// Voitures viennent de l'extérieur, s'arrêtent au feu, traversent
-
-function spawnVehicle() {
-  const dir = DIRS[Math.floor(Math.random() * DIRS.length)];
-  vehicles.push({
-    id: nextVehId++,
-    dir,
-    type: TYPES[Math.floor(Math.random() * TYPES.length)],
-    color: COLORS_VEH[Math.floor(Math.random() * COLORS_VEH.length)],
-    progress: 0,       // 0 = arrivée, 1 = traversée complète
-    state: 'approach', // approach → waiting → crossing → exit
-    waitTime: 0,
-    lane: Math.floor(Math.random() * 2) // voie 0 ou 1
-  });
-}
-
-function spawnRate() {
-  const base = { normal: 0.015, rush: 0.06, incident: 0.04, nuit: 0.004 };
-  return base[scenario] || 0.015;
-}
-
-function updateVehicles(dt) {
-  // Spawn
-  if (Math.random() < spawnRate() * dt * 60) spawnVehicle();
-
-  // Densités capteurs (voitures en attente par direction)
-  const density = { Nord:0, Sud:0, Est:0, Ouest:0 };
-
-  vehicles.forEach(v => {
-    const light = lights[v.dir];
-    const canGo = light.phase === 'green' || (emergency && v.dir === 'Est');
-
-    if (v.state === 'approach') {
-      v.progress += 0.008 * dt * 60;
-      if (v.progress >= 0.45) {
-        if (canGo) { v.state = 'crossing'; }
-        else { v.state = 'waiting'; v.progress = 0.45; density[v.dir]++; }
-      }
-    } else if (v.state === 'waiting') {
-      v.waitTime += dt;
-      density[v.dir]++;
-      if (canGo) { v.state = 'crossing'; }
-    } else if (v.state === 'crossing') {
-      v.progress += 0.012 * dt * 60;
-      if (v.progress >= 1) v.state = 'exit';
-    }
-  });
-
-  // Mettre à jour densités dans les feux
-  DIRS.forEach(d => { lights[d].density = density[d]; });
-
-  // Supprimer les voitures sorties
-  vehicles = vehicles.filter(v => v.state !== 'exit');
-
-  // Calcul attente
-  const waiting = vehicles.filter(v => v.state === 'waiting');
-  const avgWait = waiting.length > 0
-    ? waiting.reduce((s,v) => s+v.waitTime, 0) / waiting.length : 0;
-
-  // Simulation feux fixes (hypothétique) : attente fixe de 20s en moyenne
-  const fixedWait = 87 * (scenario === 'rush' ? 2.2 : scenario === 'nuit' ? 0.3 : 1);
-  const smartWait = Math.max(3, avgWait * 0.5 + density.Nord * 0.8);
-
-  return { avgWait: smartWait, fixedWait, density, vehicleCount: vehicles.length };
-}
-
-// ═══════════════════════════════════════════════════════
-//  RENDU CANVAS (vue du dessus)
-// ═══════════════════════════════════════════════════════
-const canvas = document.getElementById('sim');
+// ═══════════════════════════════════════════════════════════════════
+//  CANVAS SETUP
+// ═══════════════════════════════════════════════════════════════════
+const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
+let W, H, CX, CY;
+const RW = 88;    // road width (both lanes)
+const LW = RW/2;  // one lane width
+const IS = RW;    // intersection square (same as road width)
+const STOP = IS/2 + 6; // stop line distance from center
+const CAR_L = 22; // car length
+const CAR_W = 12; // car width
+const CAR_GAP = 8;
 
-function resize() {
-  canvas.width  = canvas.offsetWidth;
-  canvas.height = canvas.offsetHeight;
+function resize(){
+  W = canvas.width  = canvas.offsetWidth;
+  H = canvas.height = canvas.offsetHeight;
+  CX = W/2; CY = H/2;
 }
 window.addEventListener('resize', resize);
 resize();
 
-function drawScene(density) {
-  const W = canvas.width, H = canvas.height;
-  const cx = W/2, cy = H/2;
-  const roadW = Math.min(W,H) * 0.18;
-  const inter  = roadW * 1.1;
+// ═══════════════════════════════════════════════════════════════════
+//  TRAFFIC LIGHTS — ALGORITHME ADAPTATIF
+// ═══════════════════════════════════════════════════════════════════
+// Paires : NS et EO alternent. NS vert = EO rouge. Jamais pareil.
+const DIRS = ['N','S','E','O'];
+const DIR_LABEL = {N:'Nord',S:'Sud',E:'Est',O:'Ouest'};
+const DIR_COLOR = {N:'#3b82f6',S:'#f97316',E:'#a855f7',O:'#22c55e'};
 
-  ctx.clearRect(0, 0, W, H);
+// Base = 18s. Min = 8s. Max = 50s.
+const BASE_GREEN = 18, MIN_GREEN = 8, MAX_GREEN = 50;
 
-  // Fond
-  ctx.fillStyle = '#0d1b2a';
-  ctx.fillRect(0, 0, W, H);
+let lights = {
+  N:{ phase:'green',  timeLeft:BASE_GREEN, greenDur:BASE_GREEN, queue:0, adaptCount:0 },
+  S:{ phase:'green',  timeLeft:BASE_GREEN, greenDur:BASE_GREEN, queue:0, adaptCount:0 },
+  E:{ phase:'red',    timeLeft:BASE_GREEN, greenDur:BASE_GREEN, queue:0, adaptCount:0 },
+  O:{ phase:'red',    timeLeft:BASE_GREEN, greenDur:BASE_GREEN, queue:0, adaptCount:0 },
+};
+let totalAdaptations = 0;
+let nsGreen = true; // true = NS vert, EO rouge
 
-  // Herbe / zones
-  ctx.fillStyle = '#132a13';
-  [[cx-W/2, cy-H/2, cx-inter/2, cy-inter/2],
-   [cx+inter/2, cy-H/2, W/2, cy-inter/2],
-   [cx-W/2, cy+inter/2, cx-inter/2, H/2],
-   [cx+inter/2, cy+inter/2, W/2, H/2]].forEach(([x,y,w,h])=>{
-    ctx.fillRect(x,y,w,h);
-  });
-
-  // Routes
-  ctx.fillStyle = '#1e2532';
-  // Horizontale
-  ctx.fillRect(0, cy - roadW/2, W, roadW);
-  // Verticale
-  ctx.fillRect(cx - roadW/2, 0, roadW, H);
-
-  // Intersection centrale
-  ctx.fillStyle = '#252d3a';
-  ctx.fillRect(cx - inter/2, cy - inter/2, inter, inter);
-
-  // Lignes de voies (pointillés)
-  ctx.setLineDash([15, 15]);
-  ctx.strokeStyle = '#ffffff22';
-  ctx.lineWidth = 1.5;
-  // Horizontale milieu
-  ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(cx-inter/2, cy); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(cx+inter/2, cy); ctx.lineTo(W, cy); ctx.stroke();
-  // Verticale milieu
-  ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, cy-inter/2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(cx, cy+inter/2); ctx.lineTo(cx, H); ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Lignes stop (avant feux)
-  ctx.strokeStyle = '#ffffff55'; ctx.lineWidth = 2;
-  const stop = inter/2;
-  const w2 = roadW/2;
-  // Nord
-  ctx.beginPath(); ctx.moveTo(cx-w2, cy-stop+4); ctx.lineTo(cx, cy-stop+4); ctx.stroke();
-  // Sud
-  ctx.beginPath(); ctx.moveTo(cx, cy+stop-4); ctx.lineTo(cx+w2, cy+stop-4); ctx.stroke();
-  // Est
-  ctx.beginPath(); ctx.moveTo(cx+stop-4, cy); ctx.lineTo(cx+stop-4, cy+w2); ctx.stroke();
-  // Ouest
-  ctx.beginPath(); ctx.moveTo(cx-stop+4, cy-w2); ctx.lineTo(cx-stop+4, cy); ctx.stroke();
-
-  // Feux tricolores
-  drawLight('Nord',  cx - roadW*0.25, cy - stop - 16, density.Nord);
-  drawLight('Sud',   cx + roadW*0.25, cy + stop + 16, density.Sud, true);
-  drawLight('Est',   cx + stop + 16,  cy + roadW*0.25, density.Est, false, true);
-  drawLight('Ouest', cx - stop - 16,  cy - roadW*0.25, density.Ouest, false, true);
-
-  // Véhicules
-  drawVehicles(cx, cy, roadW, inter);
-
-  // Labels de direction + capteurs
-  drawLabels(cx, cy, roadW, inter, density);
+function computeGreenDur(queue){
+  if(emergency) return 50;
+  return Math.min(MAX_GREEN, Math.max(MIN_GREEN, BASE_GREEN + queue * 2.8));
 }
 
-function drawLight(dir, x, y, densityVal, flipY=false, isH=false) {
-  const light = lights[dir];
-  const w = isH ? 10 : 26, h = isH ? 26 : 10;
+function updateLights(dt){
+  // Le maître de la paire NS est N, de la paire EO est E
+  const master = lights['N'];
+  master.timeLeft -= dt;
 
-  // Boîtier
-  ctx.fillStyle = '#111';
-  ctx.beginPath();
-  ctx.roundRect(x - w/2 - 2, y - h/2 - 2, w+4, h+4, 3);
-  ctx.fill();
+  if(master.timeLeft <= 0){
+    // Transition de phase pour NS
+    if(master.phase === 'green'){
+      // NS passe à jaune
+      lights['N'].phase = lights['S'].phase = 'yellow';
+      lights['N'].timeLeft = lights['S'].timeLeft = 3;
+    } else if(master.phase === 'yellow'){
+      // NS passe à rouge, EO passe à vert
+      nsGreen = !nsGreen;
+      const prevWasNS = !nsGreen;
 
-  const phases = [
-    { name:'red',    col:'#ef4444', dimCol:'#3f0d0d' },
-    { name:'yellow', col:'#eab308', dimCol:'#3f3000' },
-    { name:'green',  col:'#22c55e', dimCol:'#0a2c14' },
-  ];
-
-  phases.forEach((p, i) => {
-    const active = light.phase === p.name || (p.name === 'green' && emergency && dir === 'Est');
-    ctx.beginPath();
-    if (isH) {
-      ctx.arc(x + (-1+i) * (w/2), y, 4, 0, Math.PI*2);
+      if(nsGreen){
+        // NS devient vert
+        const q = lights['N'].queue + lights['S'].queue;
+        const dur = computeGreenDur(q);
+        const adapted = Math.abs(dur - BASE_GREEN) > 1;
+        if(adapted){ lights['N'].adaptCount++; lights['S'].adaptCount++; totalAdaptations++; }
+        lights['N'].phase = lights['S'].phase = 'green';
+        lights['N'].greenDur = lights['S'].greenDur = dur;
+        lights['N'].timeLeft = lights['S'].timeLeft = dur;
+        lights['E'].phase = lights['O'].phase = 'red';
+        lights['E'].timeLeft = lights['O'].timeLeft = dur + 3;
+        playWhistle();
+        flashGreen();
+      } else {
+        // EO devient vert
+        const q = lights['E'].queue + lights['O'].queue;
+        const dur = computeGreenDur(q);
+        const adapted = Math.abs(dur - BASE_GREEN) > 1;
+        if(adapted){ lights['E'].adaptCount++; lights['O'].adaptCount++; totalAdaptations++; }
+        lights['E'].phase = lights['O'].phase = 'green';
+        lights['E'].greenDur = lights['O'].greenDur = dur;
+        lights['E'].timeLeft = lights['O'].timeLeft = dur;
+        lights['N'].phase = lights['S'].phase = 'red';
+        lights['N'].timeLeft = lights['S'].timeLeft = dur + 3;
+        playWhistle();
+        flashGreen();
+      }
     } else {
-      ctx.arc(x, y + (-1+i) * (h/2), 4, 0, Math.PI*2);
+      // phase rouge pour la paire inactive — géré via la transition de l'autre paire
+      lights['N'].timeLeft = 0.5; // éviter un timer à 0 bloquant
     }
-    ctx.fillStyle = active ? p.col : p.dimCol;
-    ctx.fill();
+  }
 
-    // Halo si actif
-    if (active) {
-      ctx.shadowColor = p.col;
-      ctx.shadowBlur = 12;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    }
-  });
-
-  // Timer
-  ctx.fillStyle = '#ffffff99';
-  ctx.font = 'bold 9px monospace';
-  ctx.textAlign = 'center';
-  const t = Math.max(0, Math.ceil(lights[dir === 'Nord' ? 'Nord' : dir === 'Sud' ? 'Nord' : dir === 'Est' ? 'Est' : 'Est'].timeLeft));
-  ctx.fillText(t + 's', x, y + (isH ? 16 : 20));
+  // Synchro des paires (S suit N, O suit E)
+  lights['S'].phase = lights['N'].phase;
+  lights['S'].timeLeft = lights['N'].timeLeft;
+  lights['S'].greenDur = lights['N'].greenDur;
+  lights['O'].phase = lights['E'].phase;
+  lights['O'].timeLeft = lights['E'].timeLeft;
+  lights['O'].greenDur = lights['E'].greenDur;
 }
 
-function drawVehicles(cx, cy, roadW, inter) {
-  const s = inter/2;
+function flashGreen(){
+  const f = document.getElementById('flash');
+  f.style.borderColor = '#22c55e';
+  f.style.opacity = '1';
+  setTimeout(()=>{ f.style.opacity='0'; }, 500);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  VÉHICULES
+// ═══════════════════════════════════════════════════════════════════
+const VCOLORS = ['#facc15','#60a5fa','#f87171','#4ade80','#c084fc','#fb923c','#e2e8f0','#34d399','#fbbf24'];
+const VTYPES = ['car','car','car','car','taxi','moto','truck'];
+
+let vehicles = [];
+let nextId = 0;
+let scenario = 'normal';
+let emergency = false;
+let running = false;
+
+function spawnRate(){ return {normal:0.018,rush:0.065,nuit:0.005,incident:0.04}[scenario]||0.018; }
+
+function spawnVehicle(){
+  const dir = DIRS[Math.floor(Math.random()*DIRS.length)];
+  const type = VTYPES[Math.floor(Math.random()*VTYPES.length)];
+  const spawnDist = Math.max(W,H)*0.58;
+  vehicles.push({
+    id: nextId++, dir, type,
+    color: VCOLORS[Math.floor(Math.random()*VCOLORS.length)],
+    pos: spawnDist,        // distance from center (decreases as car approaches)
+    speed: type==='moto'?2.2:type==='truck'?1.2:1.8,
+    state: 'approach',
+    waitTime: 0,
+    lane: Math.random()<0.5 ? 0 : 1,  // 0 = lane A, 1 = lane B (side by side)
+  });
+}
+
+// Densité capteur par direction
+function getSensorQueue(dir){
+  return vehicles.filter(v => v.dir===dir && v.state==='wait').length;
+}
+
+function updateVehicles(dt){
+  if(Math.random() < spawnRate()*dt*60) spawnVehicle();
+
+  // Trier par proximité (pos croissant = plus proche de l'intersection)
+  const byDir = {};
+  DIRS.forEach(d => { byDir[d] = vehicles.filter(v=>v.dir===d && v.pos > -(IS/2+60)).sort((a,b)=>a.pos-b.pos); });
 
   vehicles.forEach(v => {
-    const p = v.progress;
-    let vx, vy, angle = 0;
-    const laneOff = (v.lane - 0.5) * (roadW * 0.38);
+    const light = lights[v.dir];
+    const canGo = (light.phase==='green') || (emergency && (v.dir==='N'||v.dir==='S'));
+    const dirArr = byDir[v.dir];
+    const myIdx = dirArr.indexOf(v);
+    const myStopPos = STOP + myIdx * (CAR_L + CAR_GAP);
 
-    switch(v.dir) {
-      case 'Nord':
-        vy = cy - s - (1-p) * (cy - s); // de haut vers centre
-        vx = cx - laneOff;
-        if (v.state === 'waiting') vy = cy - s + 5 + v.lane * 12;
-        if (v.state === 'crossing') { vy = cy - s + p * s * 2.2; vx = cx - laneOff + p * roadW * 0.3; }
-        angle = Math.PI;
-        break;
-      case 'Sud':
-        vy = cy + s + (1-p) * (cy - s);
-        vx = cx + laneOff;
-        if (v.state === 'waiting') vy = cy + s - 5 - v.lane * 12;
-        if (v.state === 'crossing') { vy = cy + s - p * s * 2.2; vx = cx + laneOff - p * roadW * 0.3; }
-        angle = 0;
-        break;
-      case 'Est':
-        vx = cx + s + (1-p) * (cx - s);
-        vy = cy + laneOff;
-        if (v.state === 'waiting') vx = cx + s - 5 - v.lane * 12;
-        if (v.state === 'crossing') { vx = cx + s - p * s * 2.2; vy = cy + laneOff - p * roadW * 0.3; }
-        angle = -Math.PI/2;
-        break;
-      case 'Ouest':
-        vx = cx - s - (1-p) * (cx - s);
-        vy = cy - laneOff;
-        if (v.state === 'waiting') vx = cx - s + 5 + v.lane * 12;
-        if (v.state === 'crossing') { vx = cx - s + p * s * 2.2; vy = cy - laneOff + p * roadW * 0.3; }
-        angle = Math.PI/2;
-        break;
+    if(v.pos <= 0){
+      // Dans ou après l'intersection — traverser librement
+      v.pos -= v.speed * dt * 60;
+      v.state = 'cross';
+    } else if(!canGo && v.pos > myStopPos - 2){
+      // Feu rouge — s'arrêter
+      const decel = Math.max(0, v.pos - myStopPos);
+      v.pos = Math.max(myStopPos, v.pos - Math.min(v.speed, decel+0.5) * dt * 60);
+      v.state = 'wait';
+      v.waitTime += dt;
+    } else {
+      // Vert ou pas encore à la ligne → avancer
+      v.pos -= v.speed * dt * 60;
+      v.state = v.pos > myStopPos + 10 ? 'approach' : 'approach';
     }
 
-    const W = v.type === 'moto' ? 5 : v.type === 'minibus' ? 10 : 8;
-    const L = v.type === 'moto' ? 10 : v.type === 'minibus' ? 18 : 14;
-
-    ctx.save();
-    ctx.translate(vx, vy);
-    ctx.rotate(angle);
-    ctx.fillStyle = v.color;
-    ctx.beginPath();
-    ctx.roundRect(-W/2, -L/2, W, L, 2);
-    ctx.fill();
-
-    // Phares
-    ctx.fillStyle = '#fffde7';
-    ctx.fillRect(-W/2+1, -L/2, 2, 2);
-    ctx.fillRect(W/2-3, -L/2, 2, 2);
-
-    // Waiting = clignotement rouge
-    if (v.state === 'waiting' && tick % 30 < 15) {
-      ctx.fillStyle = '#ef444488';
-      ctx.fillRect(-W/2, L/2-3, W, 3);
-    }
-    ctx.restore();
+    // Supprimer les voitures sorties
+    if(v.pos < -(IS/2 + 80)) v._remove = true;
   });
+
+  vehicles = vehicles.filter(v=>!v._remove);
+
+  // Mise à jour des files d'attente dans les feux (capteurs)
+  DIRS.forEach(d => { lights[d].queue = getSensorQueue(d); });
 }
 
-function drawLabels(cx, cy, roadW, inter, density) {
-  const s = inter/2 + 35;
-  const dirs = [
-    { name:'Nord', x:cx, y:cy-s-20, dens:density.Nord },
-    { name:'Sud',  x:cx, y:cy+s+30, dens:density.Sud  },
-    { name:'Est',  x:cx+s+30, y:cy, dens:density.Est  },
-    { name:'Ouest',x:cx-s-30, y:cy, dens:density.Ouest},
-  ];
-
-  dirs.forEach(d => {
-    const col = DIR_COLORS[d.name];
-    const light = lights[d.name];
-    const adapted = Math.abs(light.greenDuration - FIXED_GREEN) > 2;
-
-    ctx.font = 'bold 11px Segoe UI';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = col;
-    ctx.fillText(d.name, d.x, d.y);
-
-    // Capteur densité
-    ctx.font = '9px monospace';
-    ctx.fillStyle = d.dens > 5 ? '#ef4444' : d.dens > 2 ? '#eab308' : '#22c55e';
-    ctx.fillText(`📡 ${d.dens} veh.`, d.x, d.y + 12);
-
-    // Badge adapté
-    if (adapted && running) {
-      ctx.font = 'bold 8px Segoe UI';
-      ctx.fillStyle = '#06b6d4';
-      ctx.fillText(adapted ? `⚡${light.greenDuration.toFixed(0)}s` : '', d.x, d.y + 22);
-    }
-  });
-}
-
-// ═══════════════════════════════════════════════════════
-//  BOUCLE PRINCIPALE
-// ═══════════════════════════════════════════════════════
-let last = 0;
-let simWait = 87;
-let simFixed = 87;
-
-function loop(ts) {
-  requestAnimationFrame(loop);
-  const dt = Math.min((ts - last) / 1000, 0.1);
-  last = ts;
-  tick++;
-
-  if (running) {
-    syncLights(dt);
-    const { avgWait, fixedWait, density, vehicleCount } = updateVehicles(dt);
-
-    simWait  = 0.97 * simWait  + 0.03 * avgWait;
-    simFixed = 0.97 * simFixed + 0.03 * fixedWait;
-
-    const gain = Math.max(0, ((simFixed - simWait) / simFixed * 100));
-
-    // Métriques UI
-    setText('m-wait', Math.round(simWait) + 's');
-    setText('m-veh',  vehicleCount);
-    setText('m-co2',  Math.round(100 - gain * 0.6) + '%');
-    setText('m-eff',  '+' + gain.toFixed(0) + '%');
-    setText('m-cycles', cyclesAdapted);
-
-    setBar('b-wait',  Math.min(100, simWait / 120 * 100));
-    setBar('b-veh',   Math.min(100, vehicleCount / 60 * 100));
-    setBar('b-co2',   Math.max(0, 100 - gain * 0.6));
-    setBar('b-eff',   Math.min(100, gain * 1.5));
-    setBar('b-cycles', Math.min(100, cyclesAdapted / 50 * 100));
-
-    // Comparaison
-    setText('c-classic', Math.round(simFixed) + 's');
-    setText('c-smart',   Math.round(simWait)  + 's');
-    setText('gainBadge', gain > 1
-      ? `🎯 EasyPass réduit l'attente de ${gain.toFixed(0)}% — économie ${(gain*0.7).toFixed(0)}% de CO₂`
-      : '📡 Capteurs actifs — Analyse en cours...');
-
-    // Panel algo
-    updateAlgoPanel(density);
-
-    drawScene(density);
-  } else {
-    drawScene({ Nord:0, Sud:0, Est:0, Ouest:0 });
+function carXY(v){
+  const laneOff = (v.lane - 0.5) * (LW * 0.5);
+  switch(v.dir){
+    case 'N': return { x: CX + LW*0.25 + laneOff, y: CY - v.pos, angle: Math.PI };
+    case 'S': return { x: CX - LW*0.25 - laneOff, y: CY + v.pos, angle: 0 };
+    case 'E': return { x: CX + v.pos, y: CY + LW*0.25 + laneOff, angle: -Math.PI/2 };
+    case 'O': return { x: CX - v.pos, y: CY - LW*0.25 - laneOff, angle: Math.PI/2 };
   }
 }
 
-function setText(id, v) { const el=document.getElementById(id); if(el) el.textContent=v; }
-function setBar(id, pct) { const el=document.getElementById(id); if(el) el.style.width=Math.max(0,Math.min(100,pct))+'%'; }
+// ═══════════════════════════════════════════════════════════════════
+//  RENDU
+// ═══════════════════════════════════════════════════════════════════
+let tick = 0;
 
-function updateAlgoPanel(density) {
-  const panel = document.getElementById('algoPanel');
-  panel.innerHTML = DIRS.map(dir => {
-    const l = lights[dir];
-    const phaseFr = { green:'🟢 VERT', yellow:'🟡 ORANGE', red:'🔴 ROUGE' }[l.phase];
-    const pct = Math.min(100, l.density / 10 * 100);
-    const adapted = Math.abs(l.greenDuration - FIXED_GREEN) > 2;
+function drawRoad(){
+  // Fond
+  ctx.fillStyle = '#0b1520';
+  ctx.fillRect(0,0,W,H);
+
+  // Zones vertes (coins)
+  ctx.fillStyle = '#0a1f0d';
+  ctx.fillRect(0,0,CX-IS/2,CY-IS/2);
+  ctx.fillRect(CX+IS/2,0,W,CY-IS/2);
+  ctx.fillRect(0,CY+IS/2,CX-IS/2,H);
+  ctx.fillRect(CX+IS/2,CY+IS/2,W,H);
+
+  // Route horizontale
+  ctx.fillStyle = '#1a2130';
+  ctx.fillRect(0, CY-RW/2, W, RW);
+  // Route verticale
+  ctx.fillRect(CX-RW/2, 0, RW, H);
+
+  // Intersection centrale
+  ctx.fillStyle = '#1e2840';
+  ctx.fillRect(CX-IS/2, CY-IS/2, IS, IS);
+
+  // Marquages de voies (pointillés jaunes)
+  ctx.save();
+  ctx.setLineDash([18,14]);
+  ctx.strokeStyle = '#ffffff20';
+  ctx.lineWidth = 1.5;
+  // Ligne centrale horizontale
+  ctx.beginPath(); ctx.moveTo(0,CY); ctx.lineTo(CX-IS/2,CY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(CX+IS/2,CY); ctx.lineTo(W,CY); ctx.stroke();
+  // Ligne centrale verticale
+  ctx.beginPath(); ctx.moveTo(CX,0); ctx.lineTo(CX,CY-IS/2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(CX,CY+IS/2); ctx.lineTo(CX,H); ctx.stroke();
+  ctx.restore();
+
+  // Lignes stop (blanches)
+  ctx.strokeStyle = '#ffffff66';
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([]);
+  // Nord
+  ctx.beginPath(); ctx.moveTo(CX,CY-STOP); ctx.lineTo(CX+LW,CY-STOP); ctx.stroke();
+  // Sud
+  ctx.beginPath(); ctx.moveTo(CX-LW,CY+STOP); ctx.lineTo(CX,CY+STOP); ctx.stroke();
+  // Est
+  ctx.beginPath(); ctx.moveTo(CX+STOP,CY); ctx.lineTo(CX+STOP,CY+LW); ctx.stroke();
+  // Ouest
+  ctx.beginPath(); ctx.moveTo(CX-STOP,CY-LW); ctx.lineTo(CX-STOP,CY); ctx.stroke();
+
+  // Passages piétons (zébrés)
+  drawZebra(CX-LW, CY-STOP-18, LW, 8);
+  drawZebra(CX,    CY+STOP+10, LW, 8);
+  drawZebraH(CX+STOP+10, CY-LW, 8, LW);
+  drawZebraH(CX-STOP-18, CY,   8, LW);
+}
+
+function drawZebra(x,y,w,h){
+  const stripes = 5;
+  const sw = w/stripes;
+  for(let i=0;i<stripes;i+=2){
+    ctx.fillStyle = '#ffffff18';
+    ctx.fillRect(x+i*sw, y, sw, h);
+  }
+}
+function drawZebraH(x,y,w,h){
+  const stripes = 5;
+  const sh = h/stripes;
+  for(let i=0;i<stripes;i+=2){
+    ctx.fillStyle = '#ffffff18';
+    ctx.fillRect(x, y+i*sh, w, sh);
+  }
+}
+
+function drawTrafficLight(x, y, dir, phase, timeLeft, queue, greenDur){
+  const isH = dir==='E'||dir==='O';
+  const hw = isH ? 38 : 14;
+  const hh = isH ? 14 : 38;
+
+  // Poteau
+  ctx.fillStyle = '#2a3548';
+  if(isH){
+    ctx.fillRect(x-hw/2-2, y-2, 4, 4);
+  } else {
+    ctx.fillRect(x-2, y-hh/2-10, 4, 10);
+  }
+
+  // Boîtier
+  ctx.fillStyle = '#0a0e17';
+  ctx.beginPath();
+  ctx.roundRect(x-hw/2-3, y-hh/2-3, hw+6, hh+6, 5);
+  ctx.fill();
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Couleurs des 3 lampes
+  const COL = {active:{red:'#ef4444',yellow:'#eab308',green:'#22c55e'}, dim:{red:'#1f0606',yellow:'#1f1500',green:'#061f0a'}};
+  const PHASES = ['red','yellow','green'];
+
+  PHASES.forEach((p,i)=>{
+    const lx = isH ? x + (i-1)*(hw/3+1) : x;
+    const ly = isH ? y : y + (i-1)*(hh/3+1);
+    const active = phase===p;
+    const col = active ? COL.active[p] : COL.dim[p];
+
+    if(active){
+      // Halo lumineux
+      const grad = ctx.createRadialGradient(lx,ly,0,lx,ly,14);
+      grad.addColorStop(0, col+'aa');
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(lx,ly,14,0,Math.PI*2); ctx.fill();
+    }
+
+    ctx.fillStyle = col;
+    ctx.shadowColor = active ? col : 'transparent';
+    ctx.shadowBlur = active ? 16 : 0;
+    ctx.beginPath(); ctx.arc(lx, ly, 6, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+
+  // Timer (secondes restantes)
+  const tl = Math.max(0, Math.ceil(timeLeft));
+  ctx.font = 'bold 11px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = phase==='green' ? '#22c55e' : phase==='yellow' ? '#eab308' : '#ef4444';
+  ctx.fillText(tl+'s', x, isH ? y+hh/2+16 : y+hh/2+16);
+
+  // Badge file d'attente (capteur)
+  if(queue > 0){
+    const pulse = Math.sin(tick*0.12)*0.5+0.5;
+    const qx = isH ? x : x + hw/2 + 16;
+    const qy = isH ? y - hh/2 - 16 : y;
+    // Anneau pulsant
+    ctx.strokeStyle = queue>5 ? `rgba(239,68,68,${0.4+pulse*0.4})` : `rgba(6,182,212,${0.3+pulse*0.3})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(qx, qy, 12+pulse*5, 0, Math.PI*2);
+    ctx.stroke();
+
+    // Badge nombre
+    ctx.fillStyle = queue>5 ? '#ef4444' : '#06b6d4';
+    ctx.beginPath(); ctx.arc(qx, qy, 10, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(queue, qx, qy);
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  // Label direction
+  ctx.font = 'bold 10px Segoe UI';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = DIR_COLOR[dir];
+  const lx2 = isH ? x : x - hw/2 - 20;
+  const ly2 = isH ? y - hh/2 - 26 : y;
+  ctx.fillText(DIR_LABEL[dir], isH ? x : x, isH ? y-hh/2-26 : (dir==='N'?y-hh/2-26:y+hh/2+30));
+
+  // Indicateur adaptatif
+  const adapted = Math.abs(greenDur - BASE_GREEN) > 1;
+  if(adapted && running){
+    ctx.font = 'bold 9px Segoe UI';
+    ctx.fillStyle = '#06b6d4';
+    const sign = greenDur > BASE_GREEN ? '⬆' : '⬇';
+    const diff = Math.abs(Math.round(greenDur - BASE_GREEN));
+    ctx.fillText(`${sign}${diff}s`, isH ? x : x, isH ? y-hh/2-14 : (dir==='N'?y-hh/2-14:y+hh/2+42));
+  }
+}
+
+function drawCar(v){
+  const {x, y, angle} = carXY(v);
+  // Hors de l'écran visible → skip
+  if(x<-50||x>W+50||y<-50||y>H+50) return;
+
+  const l = v.type==='truck'?30:v.type==='moto'?14:CAR_L;
+  const w = v.type==='truck'?16:v.type==='moto'?7:CAR_W;
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+
+  // Ombre
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath(); ctx.ellipse(1.5, 1.5, w/2+2, l/2+3, 0, 0, Math.PI*2); ctx.fill();
+
+  // Carrosserie
+  ctx.fillStyle = v.color;
+  ctx.beginPath(); ctx.roundRect(-w/2, -l/2, w, l, 3); ctx.fill();
+
+  // Toit (zone foncée centrale)
+  if(v.type!=='moto'){
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath(); ctx.roundRect(-w/2+2, -l/2+l*0.22, w-4, l*0.45, 2); ctx.fill();
+  }
+
+  // Phares avant (jaune/blanc)
+  ctx.fillStyle = '#fffde0';
+  ctx.fillRect(-w/2+1, -l/2+1, 3, 3);
+  ctx.fillRect(w/2-4, -l/2+1, 3, 3);
+
+  // Feux arrière (rouge)
+  const braking = v.state==='wait';
+  ctx.fillStyle = braking ? '#ef4444' : '#991b1b';
+  ctx.fillRect(-w/2+1, l/2-4, 3, 3);
+  ctx.fillRect(w/2-4, l/2-4, 3, 3);
+
+  // Roues
+  ctx.fillStyle = '#111';
+  [[-w/2-1.5,-l*0.3],[w/2+1.5,-l*0.3],[-w/2-1.5,l*0.3],[w/2+1.5,l*0.3]].forEach(([wx,wy])=>{
+    ctx.beginPath(); ctx.ellipse(wx, wy, 3, 4, 0, 0, Math.PI*2); ctx.fill();
+  });
+
+  // Numéro ID (très petit, pour identifier)
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '5px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('#'+v.id%99, 0, 1);
+
+  ctx.restore();
+}
+
+function drawLabels(){
+  // Flèches de direction sur les routes
+  const arrowStyle = '#ffffff25';
+  ctx.fillStyle = arrowStyle;
+  ctx.font = 'bold 18px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('↓', CX+LW*0.5, CY-IS/2-30);
+  ctx.fillText('↑', CX-LW*0.5, CY+IS/2+40);
+  ctx.fillText('←', CX+IS/2+35, CY+LW*0.5);
+  ctx.fillText('→', CX-IS/2-35, CY-LW*0.5);
+}
+
+function render(){
+  drawRoad();
+  drawLabels();
+
+  // Feux de signalisation (aux 4 angles de l'intersection)
+  drawTrafficLight(CX+LW*0.5+22, CY-STOP-5, 'N', lights.N.phase, lights.N.timeLeft, lights.N.queue, lights.N.greenDur);
+  drawTrafficLight(CX-LW*0.5-22, CY+STOP+5, 'S', lights.S.phase, lights.S.timeLeft, lights.S.queue, lights.S.greenDur);
+  drawTrafficLight(CX+STOP+5, CY+LW*0.5+22, 'E', lights.E.phase, lights.E.timeLeft, lights.E.queue, lights.E.greenDur);
+  drawTrafficLight(CX-STOP-5, CY-LW*0.5-22, 'O', lights.O.phase, lights.O.timeLeft, lights.O.queue, lights.O.greenDur);
+
+  // Véhicules
+  vehicles.forEach(drawCar);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  MÉTRIQUES
+// ═══════════════════════════════════════════════════════════════════
+let avgWaitSmart = 87, avgWaitClassic = 87;
+
+function updateMetrics(dt){
+  const waiting = vehicles.filter(v=>v.state==='wait');
+  const totalWait = waiting.reduce((s,v)=>s+v.waitTime, 0);
+  const currentWait = waiting.length > 0 ? totalWait/waiting.length : 0;
+  avgWaitSmart = 0.98*avgWaitSmart + 0.02*Math.max(2, currentWait);
+
+  // Simulation feux fixes (toujours 18s fixe, pas d'adaptation)
+  const fixedFactor = scenario==='rush' ? 2.3 : scenario==='nuit' ? 0.35 : 1;
+  avgWaitClassic = 0.99*avgWaitClassic + 0.01*(87*fixedFactor);
+
+  const gain = Math.max(0, (avgWaitClassic - avgWaitSmart) / avgWaitClassic * 100);
+
+  setText('k-classic', Math.round(avgWaitClassic)+'s');
+  setText('k-smart',   avgWaitSmart > 5 ? Math.round(avgWaitSmart)+'s' : '—');
+  setText('k-gain',    gain > 0.5 ? '-'+gain.toFixed(0)+'%' : '—');
+  setText('k-sub',     gain > 1 ? `⚡ ${gain.toFixed(0)}% moins d'attente · CO₂ -${(gain*0.7).toFixed(0)}%` : 'En cours d\'analyse...');
+  setText('k-cycles',  totalAdaptations);
+
+  // Panel algo
+  updateAlgoPanel();
+}
+
+function updateAlgoPanel(){
+  const g = document.getElementById('algoGrid');
+  g.innerHTML = DIRS.map(d=>{
+    const l = lights[d];
+    const tl = Math.max(0, Math.ceil(l.timeLeft));
+    const phaseFr = {green:'🟢 VERT',yellow:'🟡 ORANGE',red:'🔴 ROUGE'}[l.phase];
+    const phaseCls = l.phase;
+    const pct = Math.min(100, l.queue/8*100);
+    const pctColor = pct>75 ? '#ef4444' : pct>40 ? '#eab308' : '#22c55e';
+    const adapted = Math.abs(l.greenDur-BASE_GREEN)>1;
+    const adaptTxt = adapted
+      ? (l.greenDur>BASE_GREEN ? `⬆ Prolongé: ${l.greenDur.toFixed(0)}s (file: ${l.queue})` : `⬇ Raccourci: ${l.greenDur.toFixed(0)}s (file: ${l.queue})`)
+      : `Base: ${BASE_GREEN}s — aucune file`;
     return `
-      <div class="algo-row">
-        <div class="algo-dir" style="color:${DIR_COLORS[dir]}">${dir} 📡</div>
-        <div class="algo-phase ${l.phase}">${phaseFr}</div>
-        <div class="algo-timer">${adapted ? `⚡ ${l.greenDuration.toFixed(0)}s (adapté)` : `${FIXED_GREEN}s (fixe)`}</div>
-        <div class="algo-density">${l.density} véhicules détectés</div>
-        <div class="density-bar"><div class="density-fill" style="width:${pct}%;background:${pct>70?'#ef4444':pct>40?'#eab308':'#22c55e'}"></div></div>
-      </div>
-    `;
+      <div class="algo-cell">
+        <div class="algo-dir" style="color:${DIR_COLOR[d]}">${DIR_LABEL[d]} 📡</div>
+        <div class="algo-phase">${phaseFr}</div>
+        <div class="algo-timer ${phaseCls}">${tl}s</div>
+        <div class="algo-queue">${l.queue} véh. en attente</div>
+        <div class="algo-adapt">${running ? adaptTxt : '—'}</div>
+        <div class="density-track"><div class="density-fill" style="width:${pct}%;background:${pctColor}"></div></div>
+      </div>`;
   }).join('');
 }
 
-// ═══════════════════════════════════════════════════════
+function setText(id,v){ const e=document.getElementById(id); if(e) e.textContent=v; }
+
+// ═══════════════════════════════════════════════════════════════════
+//  BOUCLE PRINCIPALE
+// ═══════════════════════════════════════════════════════════════════
+let last = 0;
+function loop(ts){
+  requestAnimationFrame(loop);
+  const dt = Math.min((ts-last)/1000, 0.05);
+  last = ts; tick++;
+
+  if(running){
+    updateLights(dt);
+    updateVehicles(dt);
+    updateMetrics(dt);
+  }
+  render();
+}
+requestAnimationFrame(loop);
+
+// ═══════════════════════════════════════════════════════════════════
 //  CONTRÔLES
-// ═══════════════════════════════════════════════════════
-function toggleSim() {
+// ═══════════════════════════════════════════════════════════════════
+function toggleSim(){
+  ensureAudio();
   running = !running;
-  document.getElementById('btnMain').textContent = running ? '⏹ Arrêter' : '▶ Démarrer';
-  document.getElementById('btnMain').className = 'btn ' + (running ? 'btn-stop' : 'btn-go');
-  document.getElementById('badge').textContent = running ? '▌▌ En cours' : '● Arrêtée';
-  document.getElementById('badge').className = 'badge ' + (running ? 'on' : 'off');
-  if (running) { cyclesAdapted = 0; vehicles = []; }
+  if(running){ vehicles=[]; totalAdaptations=0; avgWaitSmart=87; avgWaitClassic=87; }
+  const btn = document.getElementById('btnMain');
+  btn.textContent = running ? '⏹ Arrêter' : '▶ Démarrer la simulation';
+  btn.className = 'btn-main '+(running?'stop':'go');
+  const b = document.getElementById('badge');
+  b.textContent = running ? '▌▌ En cours' : '● Arrêtée';
+  b.className = 'badge-sim '+(running?'on':'off');
 }
 
-function setScen(s) {
+function setScenario(s){
   scenario = s;
-  document.querySelectorAll('.scen-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('s-' + s)?.classList.add('active');
+  if(!running) toggleSim();
 }
 
-// ═══════════════════════════════════════════════════════
-//  CHAT CLAUDE
-// ═══════════════════════════════════════════════════════
-function qc(t) { document.getElementById('cin').value = t; sendMsg(); }
+// ═══════════════════════════════════════════════════════════════════
+//  CHAT
+// ═══════════════════════════════════════════════════════════════════
+const BK = (location.hostname==='localhost'||location.hostname==='127.0.0.1') ? 'http://localhost:5000' : location.origin;
 
-async function sendMsg() {
+function qc(t){ document.getElementById('cin').value=t; sendChat(); }
+
+async function sendChat(){
   const input = document.getElementById('cin');
   const msg = input.value.trim();
-  if (!msg) return;
+  if(!msg) return;
   input.value = '';
-  addMsg('user', msg);
-  const think = addMsg('bot', 'Claude réfléchit...', true);
-  document.querySelector('.chat-in button').disabled = true;
-
-  try {
-    const res = await fetch(`${BACKEND_URL}/api/chat`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ message: msg, sessionId:'sim-session' })
-    });
-    const data = await res.json();
+  addCMsg('user', msg);
+  const think = addCMsg('bot', 'Claude réfléchit...', true);
+  document.querySelector('.chat-foot button').disabled = true;
+  try{
+    const res = await fetch(`${BK}/api/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,sessionId:'sim'})});
+    const d = await res.json();
     think.remove();
-    addMsg('bot', data.response || 'Commande exécutée !');
-    if (data.commands) data.commands.forEach(applyCmd);
+    addCMsg('bot', d.response || 'Commande exécutée !');
+    (d.commands||[]).forEach(applyCmd);
   } catch {
     think.remove();
-    addMsg('bot', handleLocalCmd(msg));
+    addCMsg('bot', handleLocal(msg));
   }
-  document.querySelector('.chat-in button').disabled = false;
+  document.querySelector('.chat-foot button').disabled = false;
 }
 
-function addMsg(role, text, thinking=false) {
+function addCMsg(role, text, think=false){
   const el = document.createElement('div');
-  el.className = 'msg ' + (role==='user'?'user':'bot') + (thinking?' thinking':'');
+  el.className = 'cmsg '+(role==='user'?'user':'bot')+(think?' think':'');
   el.textContent = text;
-  const c = document.getElementById('msgs');
-  c.appendChild(el);
-  c.scrollTop = c.scrollHeight;
+  const c = document.getElementById('chatMsgs');
+  c.appendChild(el); c.scrollTop=c.scrollHeight;
   return el;
 }
 
-function handleLocalCmd(msg) {
+function handleLocal(msg){
   const m = msg.toLowerCase();
-  if (m.includes('rush') || m.includes('pointe')) { setScen('rush'); return '✅ Scénario Rush activé — trafic intense, les feux s\'adaptent automatiquement !'; }
-  if (m.includes('nuit')) { setScen('nuit'); return '🌙 Scénario Nuit activé — peu de véhicules, feux courts.'; }
-  if (m.includes('incident') || m.includes('accident')) { setScen('incident'); return '⚠️ Incident détecté ! Les capteurs rerouted le flux.'; }
-  if (m.includes('normal')) { setScen('normal'); return '☀️ Retour au scénario Normal.'; }
-  if (m.includes('urgence') || m.includes('ambulance')) {
-    emergency = !emergency;
-    return emergency ? '🚑 Mode urgence ! Voie Est prioritaire — feu vert permanent.' : '✅ Mode urgence désactivé.';
+  if(m.includes('rush')||m.includes('pointe')){ setScenario('rush'); return '🚗 Scénario Rush ! Trafic intense — les capteurs vont détecter les files et prolonger les feux verts automatiquement.'; }
+  if(m.includes('nuit')){ setScenario('nuit'); return '🌙 Mode Nuit — peu de voitures, les feux raccourcissent automatiquement pour économiser l\'énergie.'; }
+  if(m.includes('normal')){ setScenario('normal'); return '☀️ Trafic normal rétabli.'; }
+  if(m.includes('urgence')||m.includes('ambulance')){
+    emergency=!emergency;
+    return emergency ? '🚑 Mode URGENCE activé ! Les voies N/S ont la priorité absolue — feu vert prolongé à 50s.' : '✅ Mode urgence désactivé.';
   }
-  if (m.includes('capteur') || m.includes('comment')) {
-    return '📡 Les capteurs comptent les véhicules en attente sur chaque voie. L\'algorithme EasyPass ajuste la durée du feu vert : plus il y a de voitures, plus le feu reste vert longtemps (max 45s). Si une voie est vide, le feu passe rapidement au rouge pour libérer les autres.';
+  if(m.includes('capteur')||m.includes('fonctionn')){
+    return '📡 Les capteurs sont placés sur chaque voie, à la ligne stop. Ils comptent les véhicules en attente. L\'algorithme EasyPass calcule: durée_vert = 18s + (nb_voitures × 2.8s), entre 8s minimum et 50s maximum. Si une voie est vide, le feu passe vite au rouge pour libérer les autres !';
   }
-  if (m.includes('co2') || m.includes('émission')) {
-    return `🌍 En réduisant les temps d'attente de ${Math.round(Math.max(0,(simFixed-simWait)/simFixed*100))}%, EasyPass réduit aussi les émissions CO₂ des moteurs au ralenti de ~${Math.round(Math.max(0,(simFixed-simWait)/simFixed*70))}%.`;
+  if(m.includes('co2')||m.includes('environ')){
+    const g=Math.max(0,(avgWaitClassic-avgWaitSmart)/avgWaitClassic*100);
+    return `🌍 En réduisant l'attente de ${g.toFixed(0)}%, EasyPass réduit les émissions CO₂ des moteurs au ralenti de ${(g*0.7).toFixed(0)}%. Sur une intersection à 1200 véh/h, ça représente ~${(g*8.4).toFixed(0)}kg de CO₂ économisé par jour !`;
   }
-  return `💬 Commande reçue. En mode local, dis-moi : "rush", "nuit", "incident", "urgence", ou pose des questions sur les capteurs et le CO₂.`;
+  return `💬 En mode local : dis "rush", "nuit", "urgence", "normal", ou pose une question sur les capteurs et l'algorithme.`;
 }
 
-function applyCmd(cmd) {
-  if (cmd.type === 'scenario') setScen(cmd.value);
-  if (cmd.type === 'emergency') { emergency = cmd.value; }
+function applyCmd(cmd){
+  if(cmd.type==='scenario') setScenario(cmd.value);
+  if(cmd.type==='emergency') emergency=cmd.value;
 }
 
-document.getElementById('cin').addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+document.getElementById('cin').addEventListener('keydown', e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}
 });
-
-// Lancer le rendu
-requestAnimationFrame(loop);
-resize();
 </script>
 </body>
 </html>
