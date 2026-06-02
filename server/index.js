@@ -8,12 +8,27 @@ require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
+
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://127.0.0.1:3001',
+  'https://easypass3d.netlify.app',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 const io = socketIo(server, {
-  cors: { origin: '*' }
+  cors: {
+    origin: ALLOWED_ORIGINS,
+    methods: ['GET', 'POST']
+  }
 });
 
-app.use(cors());
+app.use(cors({ origin: ALLOWED_ORIGINS }));
 app.use(express.json());
+
+// Health check pour Render
+app.get('/health', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
 
 const client = new Anthropic();
 const simulation = new TrafficSimulation();
