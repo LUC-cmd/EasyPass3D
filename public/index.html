@@ -93,17 +93,46 @@ canvas{display:block;width:100%;height:100%}
 .dens{height:4px;background:#0f172a;border-radius:2px;margin-top:5px;overflow:hidden}
 .densfill{height:100%;border-radius:2px;transition:width .3s}
 
-/* SCÉNARIOS */
-.scenlist{flex-shrink:0;border-bottom:1px solid var(--b1)}
-.scrow{display:flex;align-items:center;gap:10px;padding:8px 14px;cursor:pointer;border-left:3px solid transparent;transition:all .2s;border-bottom:1px solid #0b1a2f}
-.scrow:hover{background:var(--s3);border-left-color:var(--cyan)}
-.scrow.on{background:var(--s3);border-left-color:var(--cyan)}
-.scrow.on .scname{color:var(--cyan)}
-.scem{font-size:20px;width:28px;text-align:center}
-.scname{font-size:12px;font-weight:700}
-.scdesc{font-size:9px;color:var(--m)}
-.sctag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:var(--b1);margin-left:auto;flex-shrink:0}
-.scrow.on .sctag{background:var(--cyan);color:#000}
+/* ── BOUTONS SCÉNARIOS ── */
+.scen-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 10px 6px;flex-shrink:0}
+.scen-btn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;padding:14px 8px;border-radius:12px;border:2px solid transparent;
+  cursor:pointer;transition:all .2s;background:var(--s2);text-align:center;
+  position:relative;overflow:hidden;
+}
+.scen-btn::before{content:'';position:absolute;inset:0;background:currentColor;opacity:0;transition:opacity .2s}
+.scen-btn:hover::before{opacity:.06}
+.scen-btn:hover{transform:translateY(-2px);border-color:currentColor;box-shadow:0 4px 16px currentColor44}
+.scen-btn.on{border-color:currentColor;box-shadow:0 0 22px currentColor55}
+.scen-btn.on::before{opacity:.1}
+.scen-icon{font-size:28px;line-height:1}
+.scen-name{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+.scen-desc{font-size:9px;color:var(--m);margin-top:1px}
+.scen-btn.sn{color:var(--cyan)} .scen-btn.sr{color:var(--org)}
+.scen-btn.si{color:var(--red)}  .scen-btn.sk{color:var(--pur)}
+
+/* ── BOUTON IA AUTO ── */
+.ia-auto-btn{
+  margin:2px 10px 10px;padding:14px 16px;
+  border-radius:12px;border:2px solid var(--pur);
+  background:#1a0a3022;cursor:pointer;transition:all .25s;
+  display:flex;align-items:center;gap:14px;flex-shrink:0;
+}
+.ia-auto-btn:hover{background:#3b0f8033;box-shadow:0 0 22px #8b5cf655;transform:scale(1.02)}
+.ia-auto-btn.on{background:#2a0d5022;box-shadow:0 0 30px #8b5cf677;animation:iapulse 1.5s ease infinite}
+@keyframes iapulse{0%,100%{box-shadow:0 0 20px #8b5cf644}50%{box-shadow:0 0 40px #8b5cf699}}
+.ia-big{font-size:32px}
+.ia-txt{flex:1}
+.ia-name{font-size:14px;font-weight:900;color:var(--pur);letter-spacing:.3px}
+.ia-desc{font-size:10px;color:var(--m);margin-top:2px}
+.ia-toggle{
+  padding:5px 12px;border-radius:20px;font-size:11px;font-weight:900;
+  border:2px solid;letter-spacing:.5px;transition:all .3s;
+}
+.ia-toggle.off{border-color:var(--m);color:var(--m)}
+.ia-toggle.on2{border-color:var(--green);color:var(--green);background:#052e1633;
+  box-shadow:0 0 12px #22c55e66;animation:blink 1s ease infinite}
 
 /* TOTAL SAVINGS */
 .savings{padding:10px 14px;border-bottom:1px solid var(--b1);display:flex;gap:12px;flex-shrink:0}
@@ -209,28 +238,38 @@ canvas{display:block;width:100%;height:100%}
     </div>
 
     <!-- SCÉNARIOS -->
-    <div class="ph blue">🗺 Scénarios</div>
-    <div class="scenlist">
-      <div class="scrow on" id="sc-normal" onclick="setScen('normal','⚙ NORMAL')">
-        <div class="scem">☀️</div>
-        <div><div class="scname">Trafic normal</div><div class="scdesc">Flux équilibré</div></div>
-        <div class="sctag">1 200/h</div>
+    <div class="ph blue">🗺 Choisir un scénario</div>
+    <div class="scen-grid">
+      <div class="scen-btn sn on" id="sc-normal" onclick="setScen('normal','☀️ NORMAL')">
+        <span class="scen-icon">☀️</span>
+        <span class="scen-name">Normal</span>
+        <span class="scen-desc">Flux équilibré · 1 200/h</span>
       </div>
-      <div class="scrow" id="sc-rush" onclick="setScen('rush','🚗 HEURE DE POINTE')">
-        <div class="scem">🚗</div>
-        <div><div class="scname">Heure de pointe</div><div class="scdesc">Trafic intense — IA maximale</div></div>
-        <div class="sctag">4 800/h</div>
+      <div class="scen-btn sr" id="sc-rush" onclick="setScen('rush','🚗 RUSH')">
+        <span class="scen-icon">🚗</span>
+        <span class="scen-name">Rush</span>
+        <span class="scen-desc">Heure de pointe · 4 800/h</span>
       </div>
-      <div class="scrow" id="sc-incident" onclick="setScen('incident','⚠️ INCIDENT')">
-        <div class="scem">⚠️</div>
-        <div><div class="scname">Incident — voie bloquée</div><div class="scdesc">Redirection intelligente</div></div>
-        <div class="sctag">Bloqué</div>
+      <div class="scen-btn si" id="sc-incident" onclick="setScen('incident','⚠️ ACCIDENT')">
+        <span class="scen-icon">⚠️</span>
+        <span class="scen-name">Accident</span>
+        <span class="scen-desc">Voie bloquée — redirection</span>
       </div>
-      <div class="scrow" id="sc-nuit" onclick="setScen('nuit','🌙 NUIT CALME')">
-        <div class="scem">🌙</div>
-        <div><div class="scname">Nuit calme</div><div class="scdesc">Feux courts automatiques</div></div>
-        <div class="sctag">180/h</div>
+      <div class="scen-btn sk" id="sc-nuit" onclick="setScen('nuit','🌙 NUIT')">
+        <span class="scen-icon">🌙</span>
+        <span class="scen-name">Nuit calme</span>
+        <span class="scen-desc">Peu de trafic · 180/h</span>
       </div>
+    </div>
+
+    <!-- IA AUTO -->
+    <div class="ia-auto-btn" id="iabtn" onclick="toggleIA()">
+      <span class="ia-big">🧠</span>
+      <div class="ia-txt">
+        <div class="ia-name">IA AUTOMATIQUE</div>
+        <div class="ia-desc">L'IA change les scénarios seule — démo complète automatique</div>
+      </div>
+      <div class="ia-toggle off" id="iatog">OFF</div>
     </div>
 
   </aside>
@@ -606,17 +645,63 @@ function toggleSim(){
 
 function setScen(s,tag){
   scen=s;
-  document.querySelectorAll('.scrow').forEach(b=>b.classList.remove('on'));
+  // Mettre à jour les boutons (nouvelle classe .on)
+  document.querySelectorAll('.scen-btn').forEach(b=>b.classList.remove('on'));
   document.getElementById('sc-'+s)?.classList.add('on');
   document.getElementById('schip').textContent=tag;
   if(!running)toggleSim();
   const msgs={
-    rush:'🚗 RUSH ! Trafic intense — les capteurs vont détecter les files et prolonger les feux !',
-    nuit:'🌙 Nuit calme — peu de voitures, les feux se raccourcissent automatiquement.',
-    incident:'⚠️ Voie Est BLOQUÉE ! L\'IA redirige le flux sur 3 voies.',
-    normal:'☀️ Trafic normal rétabli.'
+    rush:'🚗 RUSH ! Trafic intense — les capteurs détectent les files, les feux verts se prolongent automatiquement !',
+    nuit:'🌙 Nuit calme — peu de voitures, les feux se raccourcissent pour économiser l\'énergie.',
+    incident:'⚠️ ACCIDENT voie Est ! L\'IA redirige intelligemment le flux sur 3 voies.',
+    normal:'☀️ Trafic normal — flux équilibré sur les 4 voies.'
   };
-  if(msgs[s])notif(s==='rush'?'red':s==='nuit'?'cyan':'green',msgs[s]);
+  const col={rush:'red',nuit:'cyan',incident:'red',normal:'green'};
+  if(msgs[s])notif(col[s]||'cyan',msgs[s]);
+}
+
+// ═══════════════════════════════════════
+//  MODE IA AUTOMATIQUE
+// ═══════════════════════════════════════
+let iaOn=false,iaTimer=null;
+const IA_SEQUENCE=[
+  {s:'normal',  tag:'☀️ NORMAL',   t:10000},
+  {s:'rush',    tag:'🚗 RUSH',     t:14000},
+  {s:'incident',tag:'⚠️ ACCIDENT', t:12000},
+  {s:'nuit',    tag:'🌙 NUIT',     t:8000},
+  {s:'rush',    tag:'🚗 RUSH',     t:14000},
+];
+let iaIdx=0;
+
+function toggleIA(){
+  iaOn=!iaOn;
+  const btn=document.getElementById('iabtn');
+  const tog=document.getElementById('iatog');
+  if(iaOn){
+    btn.classList.add('on');
+    tog.textContent='ON';tog.className='ia-toggle on2';
+    if(!running)toggleSim();
+    iaIdx=0;
+    notif('pur','🧠 IA AUTO activée ! Démo complète en cours — tous les scénarios vont défiler automatiquement.','pur');
+    runNextIA();
+  } else {
+    btn.classList.remove('on');
+    tog.textContent='OFF';tog.className='ia-toggle off';
+    clearTimeout(iaTimer);
+    notif('cyan','⏸ IA AUTO désactivée. Contrôle manuel.','cyan');
+    setScen('normal','☀️ NORMAL');
+  }
+}
+
+function runNextIA(){
+  if(!iaOn)return;
+  const step=IA_SEQUENCE[iaIdx];
+  setScen(step.s,step.tag);
+  notif('pur',`🤖 IA → Scénario "${step.tag}" (${step.t/1000}s)...`,'pur');
+  iaTimer=setTimeout(()=>{
+    iaIdx=(iaIdx+1)%IA_SEQUENCE.length;
+    runNextIA();
+  },step.t);
 }
 
 // ═══════════════════════════════════════
